@@ -67,6 +67,7 @@
   .floorBadge{ font-size:15px; color:#d9faff; }
   .warning{ color:#ffb0b9; }
   input.roomInput{ pointer-events:auto; border:1px solid rgba(150,230,255,.35); background:rgba(0,0,0,.35); color:white; border-radius:12px; padding:10px 12px; font-size:15px; outline:none; }
+  textarea.roomInput{ pointer-events:auto; width:100%; min-height:112px; resize:vertical; border:1px solid rgba(150,230,255,.35); background:rgba(0,0,0,.35); color:white; border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.45; outline:none; box-sizing:border-box; font-family:Consolas, Monaco, monospace; }
   .roomList{ display:flex; flex-direction:column; gap:10px; margin-top:12px; }
   .roomCard{ border:1px solid rgba(150,230,255,.26); background:rgba(255,255,255,.06); border-radius:16px; padding:12px; display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
   .roomCode{ color:#ffe16b; font-weight:bold; letter-spacing:2px; font-size:20px; }
@@ -80,15 +81,31 @@
     <h1 class="logoGlow">末日辦公室：3D 狙擊救援</h1>
     <p>你被困在一棟廢棄辦公室。早上只有 30 秒可以喘息，夜晚 1 分鐘會大量出現僵屍，但夜晚也保持明亮，不會黑到看不見。用錢買狙擊槍、升級、換皮膚，保護 AI 隊友。隊友倒下時，靠近後按 <b>E</b> 使用治療針救他。</p>
     <div class="grid">
-      <div class="shopItem"><div class="name">控制</div><small>W 往前、S 往後、A 往左、D 往右，空白鍵跳，Shift 跑步，V 滑鏟，滑鼠看方向，Q 瞄準，X 射擊，R 換彈，B 商店，F 換樓層 / 攀爬高台，E 救隊友。</small></div>
+      <div class="shopItem"><div class="name">控制</div><small>W 往前、S 往後、A 往左、D 往右，空白鍵跳，Shift 跑步，V 滑鏟，滑鼠看方向，Q 瞄準，X / 左鍵 射擊，R 換彈，O 槍械檢視，B 商店，F 換樓層 / 攀爬高台，E 救隊友。</small></div>
       <div class="shopItem"><div class="name">地圖</div><small>1F 破碎大廳、2F 辦公格迷宮、3F 伺服器資料室、4F 高級主管樓。每層樓都不一樣，僵屍不會穿牆，會繞迷宮追你。</small></div>
       <div class="shopItem"><div class="name">最強槍</div><small>買到「超級方塊狙擊槍」後，第一人稱手上的槍會變成很多發光方塊組成的超級槍。</small></div>
     </div>
+    <div class="shopItem" style="margin-top:14px">
+      <div class="name">對狙模式選擇</div>
+      <small>一般對狙先殺 10 個敵人獲勝；爆破、殲滅、佔地盤都是 5v5 AI 團隊戰。</small>
+      <select id="duelModeSelect" class="roomInput" style="margin-top:8px;width:min(520px,100%)">
+        <option value="onevone">一般 1v1 對狙：先殺 10 個敵人獲勝</option>
+        <option value="bomb">經典爆破：5 回合，P 裝彈，防守方 4 秒拆彈，Z 趴下</option>
+        <option value="elim">經典殲滅：5v5，先殺 40 次獲勝，可一直重生</option>
+        <option value="zone">佔地盤：5v5，踩點佔領，先到 100 分獲勝</option>
+      </select>
+      <select id="bombRoleSelect" class="roomInput" style="margin-top:8px;width:min(520px,100%)">
+        <option value="attack">爆破身份：進攻方（面前會有炸彈，按 P 裝彈）</option>
+        <option value="defend">爆破身份：防守方（畫面會顯示防守方，按 P 拆彈）</option>
+        <option value="random">爆破身份：隨機</option>
+      </select>
+    </div>
     <div class="row" style="margin-top:16px">
       <button id="startBtn">開始生存模式</button>
-      <button id="startDuelBtn" class="secondary">開始對狙模式</button>
+      <button id="startDuelBtn" class="secondary">開始選擇的對狙模式</button>
       <button id="onlineDuelBtn" class="secondary">線上開房對狙</button>
       <button id="openShopBtn" class="secondary">先看槍店</button>
+      <button id="musicBtn" class="dark">音樂：開</button>
       <button id="resetBtn" class="bad">重置存檔</button>
     </div>
   </div>
@@ -122,9 +139,27 @@
     <div class="row" style="justify-content:space-between">
       <div>
         <h1>線上對狙房間</h1>
-        <p>建立房間後，其他玩家打開同一個網址就會在列表看到房間，可以按「跳進房間」跟你對狙。</p>
+        <p>建立房間後，其他玩家打開同一個網址就會在列表看到房間，可以按「跳進房間」跟你對狙。Firebase 由你自己登入後貼設定，不會自動用別人的專案。</p>
       </div>
       <button id="closeOnlineLobbyBtn" class="dark">關閉</button>
+    </div>
+    <div class="shopItem">
+      <div class="name">Firebase 設定：你自己登入 Firebase 後貼上</div>
+      <small>到 Firebase Console 建立 Web App，複製 <b>firebaseConfig</b> 那段貼到下面。設定會存在你的瀏覽器裡，下次不用重貼。</small>
+      <textarea id="firebaseConfigInput" class="roomInput" placeholder='貼上像這樣的設定：
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...",
+  databaseURL: "https://你的專案-default-rtdb...firebasedatabase.app",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
+};'></textarea>
+      <div class="row" style="margin-top:10px">
+        <button id="connectFirebaseBtn" class="secondary">我已登入 Firebase，連線</button>
+        <button id="clearFirebaseConfigBtn" class="dark">清除 Firebase 設定</button>
+      </div>
     </div>
     <div class="shopItem">
       <div class="name">玩家名字</div>
@@ -133,7 +168,7 @@
         <button id="createRoomBtn">建立房間</button>
         <button id="refreshRoomsBtn" class="secondary">刷新房間</button>
       </div>
-      <small id="onlineStatus">準備連線到 Firebase 房間中心。</small>
+      <small id="onlineStatus">請先登入 Firebase Console，貼上你的 Firebase 設定後按「連線」。</small>
     </div>
     <h2>可以跳進去的房間</h2>
     <div id="roomList" class="roomList"><div class="shopItem">還沒有讀取到房間。</div></div>
@@ -151,7 +186,10 @@
       <div class="chip stat">治療針 <b id="syringeText">3</b></div>
       <div class="chip stat floorBadge">樓層 <b id="floorText">1F 破碎大廳</b></div>
     </div>
-    <div class="chip weap" id="weaponText">武器</div>
+    <div style="display:flex; gap:8px; align-items:flex-start; pointer-events:auto;">
+      <button id="musicHudBtn" class="dark" style="padding:8px 12px">音樂：開</button>
+      <div class="chip weap" id="weaponText">武器</div>
+    </div>
   </div>
   <div class="miniMap"><canvas id="mapCanvas" width="180" height="180"></canvas></div>
   <div id="scope" class="scope"><div class="ring"></div></div>
@@ -160,7 +198,7 @@
   <div id="reviveBox" class="revive"><b id="reviveText">治療中</b><div class="bar"><span id="reviveBar" style="width:0%"></span></div></div>
   <div id="reloadBox" class="reload"><b id="reloadText">換彈中</b><div class="bar"><span id="reloadBar" style="width:0%"></span></div></div>
   <div class="bottom">
-    <div class="chip hint">W前 S後 A左 D右｜空白鍵跳｜Shift 跑步｜V 滑鏟加速｜Q 瞄準｜X 射擊｜R 換彈｜B 商店｜F 換樓層 / 對狙模式攀爬高台｜對狙模式子彈可穿牆｜E 靠近倒地隊友用治療針｜治療針可在商店補給｜地圖有障礙物可躲藏｜僵屍不穿牆，會走迷宮</div>
+    <div class="chip hint">W前 S後 A左 D右｜空白鍵跳｜Shift 跑步｜V 滑鏟加速｜Q 瞄準｜X / 左鍵 射擊｜R 換彈｜M 音樂開關｜B 商店｜F 換樓層 / 對狙模式攀爬高台｜P 爆破裝彈｜Z 趴下｜對狙模式子彈可穿牆｜E 靠近倒地隊友用治療針｜治療針可在商店補給｜地圖有障礙物可躲藏｜僵屍不穿牆，會走迷宮</div>
   </div>
   <div class="team" id="teamPanel"></div>
   <div class="damageVignette" id="damageVignette"></div>
@@ -180,25 +218,20 @@ const reviveText = $('reviveText'), reviveBar = $('reviveBar');
 const reloadBox = $('reloadBox'), reloadText = $('reloadText'), reloadBar = $('reloadBar');
 const mapCtx = $('mapCanvas').getContext('2d');
 const onlineLobby = $('onlineLobby'), roomListEl = $('roomList'), onlineStatus = $('onlineStatus');
+const musicBtn = $('musicBtn'), musicHudBtn = $('musicHudBtn');
 
 // Firebase Realtime Database：用來讓不同電腦看到同一個房間列表與玩家位置。
-// 這組設定是網站前端可公開的 Firebase 初始化設定；若你換專案，改這裡即可。
-const firebaseConfig = {
-  apiKey: "AIzaSyAbUGxlS5TctJJA8EcGdm6UUnx80HOG5Sw",
-  authDomain: "aaron-2026.firebaseapp.com",
-  databaseURL: "https://aaron-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "aaron-2026",
-  storageBucket: "aaron-2026.firebasestorage.app",
-  messagingSenderId: "383945367796",
-  appId: "1:383945367796:web:03da881daa4d5d371bbea1"
-};
+// 這個版本不會自動使用固定專案；玩家要自己登入 Firebase Console，複製 firebaseConfig 貼到線上大廳。
+let firebaseConfig = null;
 
 const gunDefs = [
   { id:'rust', name:'鏽鐵偵查狙', price:0, damage:58, cooldown:.72, range:92, mag:5, reload:1.6, desc:'最開始的破舊狙擊槍，威力普通但很好上手。', color:0x777777 },
   { id:'office', name:'辦公室長牙', price:700, damage:96, cooldown:.86, range:120, mag:6, reload:1.8, desc:'用辦公椅鋼管改造，遠距離打僵屍很穩。', color:0x66b8ff },
   { id:'neon', name:'霓虹毒蛇狙', price:1700, damage:150, cooldown:.95, range:145, mag:7, reload:2.0, desc:'槍身會發出綠紫光，瞄準時暴擊率更高。', color:0x8dff70 },
   { id:'thunder', name:'雷霆磁軌狙', price:3600, damage:230, cooldown:1.12, range:170, mag:4, reload:2.25, desc:'發射高能電磁彈，一槍可以穿透僵屍身體。', color:0x75f7ff },
-  { id:'cube', name:'超級方塊狙擊槍', price:8000, damage:420, cooldown:1.25, range:230, mag:3, reload:2.65, desc:'最強狙擊槍，由遊戲裡的超級方塊組成，槍身會跳動發光。', color:0xffdc58, cube:true }
+  { id:'snow', name:'雪林狙', price:5200, damage:255, cooldown:1.02, range:182, mag:5, reload:2.2, desc:'槍身旁邊會閃爍雪花，擊殺時會下雪，最後有狼衝出來吃掉敵人。', color:0xdff6ff },
+  { id:'electric', name:'電擊狙', price:6500, damage:315, cooldown:1.08, range:195, mag:4, reload:2.35, desc:'子彈像藍色閃電，槍身旁邊有雷電圈，擊殺時會打下一道藍色閃電。', color:0x59c6ff },
+  { id:'cube', name:'超級方塊狙擊槍', price:8000, damage:420, cooldown:1.25, range:230, mag:3, reload:2.65, desc:'最強狙擊槍，整把槍都變成閃爍發光的小方塊，全身都是方塊特效。', color:0xffdc58, cube:true }
 ];
 const skinDefs = [
   { id:'default', name:'原本外觀', price:0, desc:'使用每把槍自己的造型。' },
@@ -226,16 +259,29 @@ let shootCooldown = 0, scoped = false, msgTimer = 0, hurtTimer = 0, reviveTarget
 let ammo = 5, reloading = false, reloadTimer = 0, reloadTotal = 0, reloadPulse = 0;
 let rainbowHue = 0;
 let cubeAuraCubes = [];
+let cubeFlashCubes = [];
+let snowAuraFlakes = [];
+let electricAuraRings = [];
+let electricSparkBolts = [];
 let killProjector = null, killProjectorCanvas = null, killProjectorCtx = null, killProjectorTexture = null;
 let currentMode = 'survival', currentArenaName = '1F 破碎大廳';
+let duelRule = 'onevone', arenaHalf = 36.2;
 let duelBot = null, climbSpots = [];
+let modeBots = [], bombSites = [], captureZones = [];
+let bombRole = 'attack', playerTeam = 'blue', enemyTeam = 'red', carryBombMesh = null;
+let match = { rule:'onevone', playerKills:0, enemyKills:0, targetKills:10, blueKills:0, redKills:0, blueScore:0, redScore:0, round:1, maxRounds:5, attackRounds:0, defendRounds:0, state:'playing', timer:0, bomb:null, plantProgress:0, defuseProgress:0, playerDeadTimer:0 };
 let slideTimer = 0, slideCooldown = 0, slideDir = new THREE.Vector3();
+let gunInspectTimer = 0, gunInspectTotal = 0;
 let db = null, roomsRef = null, firebaseReady = false;
 let online = { enabled:false, roomId:null, playerId:null, playerName:'狙擊玩家', isHost:false, roomRef:null, playersRef:null, eventsRef:null, remoteId:null, remoteData:null, remoteMesh:null, lastSend:0, processedEvents:new Set(), unsubscribeRooms:null };
+let killEffects = [];
+let specialKillEffects = [];
+let audioCtx = null, musicMaster = null, musicTimer = 0, musicStep = 0, musicModeName = 'menu';
+let musicEnabled = localStorage.getItem('sniperMusicOff') !== '1';
 
 const defaultSave = () => ({
   cash:300, kills:0, syringes:3, selectedGun:'rust', selectedSkin:'default',
-  ownedGuns:['rust'], ownedSkins:['default'], upgrades:{ rust:0, office:0, neon:0, thunder:0, cube:0 }
+  ownedGuns:['rust'], ownedSkins:['default'], upgrades:{ rust:0, office:0, neon:0, thunder:0, snow:0, electric:0, cube:0 }
 });
 function loadSave(){
   try{
@@ -288,17 +334,32 @@ function init(){
   document.addEventListener('keyup', e => keys[e.code] = false);
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('pointerlockchange', () => pointerLocked = document.pointerLockElement === renderer.domElement);
-  renderer.domElement.addEventListener('click', () => { if(playing && shop.classList.contains('hidden')) renderer.domElement.requestPointerLock(); });
+  renderer.domElement.addEventListener('click', () => {
+    if(!playing || !shop.classList.contains('hidden')) return;
+    if(!pointerLocked) renderer.domElement.requestPointerLock();
+  });
+  renderer.domElement.addEventListener('mousedown', (e) => {
+    if(e.button !== 0) return;
+    if(!playing || !shop.classList.contains('hidden')) return;
+    if(!pointerLocked){ renderer.domElement.requestPointerLock(); return; }
+    shoot();
+  });
   $('startBtn').onclick = () => startGame('survival');
   $('startDuelBtn').onclick = () => startGame('duel');
   $('onlineDuelBtn').onclick = openOnlineLobby;
   $('openShopBtn').onclick = () => { menu.classList.add('hidden'); openShop(false); };
   $('closeShopBtn').onclick = () => closeShop();
+  musicBtn.onclick = toggleMusic;
+  musicHudBtn.onclick = toggleMusic;
+  updateMusicButtons();
   $('resetBtn').onclick = () => { localStorage.removeItem('sniperOfficeSave'); location.reload(); };
   $('closeOnlineLobbyBtn').onclick = closeOnlineLobby;
   $('createRoomBtn').onclick = createOnlineRoom;
   $('refreshRoomsBtn').onclick = listenRooms;
+  $('connectFirebaseBtn').onclick = connectManualFirebase;
+  $('clearFirebaseConfigBtn').onclick = clearManualFirebaseConfig;
   $('onlineName').value = localStorage.getItem('sniperOnlineName') || '狙擊玩家';
+  loadFirebaseConfigInput();
 
   animate();
 }
@@ -313,19 +374,143 @@ function stopOnlineRoom(removeRoom=false){
   if(online.remoteMesh) online.remoteMesh.visible = false;
 }
 
+
+function updateMusicButtons(){
+  const text = musicEnabled ? '音樂：開' : '音樂：關';
+  if(musicBtn) musicBtn.textContent = text;
+  if(musicHudBtn) musicHudBtn.textContent = text + ' M';
+}
+function ensureAudio(){
+  if(audioCtx) return true;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return false;
+  audioCtx = new AC();
+  musicMaster = audioCtx.createGain();
+  musicMaster.gain.value = musicEnabled ? .13 : 0.0001;
+  musicMaster.connect(audioCtx.destination);
+  return true;
+}
+function startBackgroundMusic(){
+  if(!musicEnabled) { updateMusicButtons(); return; }
+  if(!ensureAudio()) return;
+  if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  musicTimer = 0;
+  updateMusicButtons();
+}
+function toggleMusic(){
+  musicEnabled = !musicEnabled;
+  localStorage.setItem('sniperMusicOff', musicEnabled ? '0' : '1');
+  updateMusicButtons();
+  if(musicEnabled){
+    startBackgroundMusic();
+    showMsg('背景音樂：開啟');
+  } else {
+    if(musicMaster) musicMaster.gain.setTargetAtTime(0.0001, audioCtx.currentTime, .08);
+    showMsg('背景音樂：關閉');
+  }
+}
+function getMusicMode(){
+  if(!playing) return 'menu';
+  if(currentMode === 'duel'){
+    if(duelRule === 'bomb') return 'bomb';
+    if(duelRule === 'zone') return 'zone';
+    return 'duel';
+  }
+  return phase === 'night' ? 'night' : 'survival';
+}
+function midiToFreq(m){ return 440 * Math.pow(2, (m - 69) / 12); }
+function playTone(midi, when, dur, type='sine', gain=.04, filterFreq=900){
+  if(!audioCtx || !musicMaster) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  const f = audioCtx.createBiquadFilter();
+  osc.type = type;
+  osc.frequency.value = midiToFreq(midi);
+  f.type = 'lowpass'; f.frequency.value = filterFreq;
+  g.gain.setValueAtTime(0.0001, when);
+  g.gain.linearRampToValueAtTime(gain, when + .018);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + Math.max(.035, dur));
+  osc.connect(f); f.connect(g); g.connect(musicMaster);
+  osc.start(when); osc.stop(when + dur + .04);
+}
+function playKick(when, gain=.06){
+  if(!audioCtx || !musicMaster) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(95, when);
+  osc.frequency.exponentialRampToValueAtTime(42, when + .16);
+  g.gain.setValueAtTime(gain, when);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + .18);
+  osc.connect(g); g.connect(musicMaster); osc.start(when); osc.stop(when + .2);
+}
+function playHat(when, gain=.018){
+  if(!audioCtx || !musicMaster) return;
+  const buffer = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * .06), audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * (1 - i/data.length);
+  const src = audioCtx.createBufferSource(); src.buffer = buffer;
+  const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value = 4200;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(gain, when);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + .055);
+  src.connect(f); f.connect(g); g.connect(musicMaster); src.start(when); src.stop(when + .07);
+}
+function scheduleMusicStep(mode, step){
+  if(!audioCtx || !musicMaster || !musicEnabled) return;
+  const now = audioCtx.currentTime + .025;
+  const configs = {
+    menu:{ root:45, scale:[0,3,7,10,7,3,0,-2], beat:.46, bass:.028, lead:.014, pad:.018 },
+    survival:{ root:42, scale:[0,0,7,3,0,10,7,3], beat:.32, bass:.045, lead:.021, pad:.014 },
+    night:{ root:40, scale:[0,1,6,1,8,6,1,-1], beat:.36, bass:.05, lead:.017, pad:.023 },
+    duel:{ root:44, scale:[0,7,10,7,12,10,7,3], beat:.28, bass:.05, lead:.026, pad:.012 },
+    bomb:{ root:41, scale:[0,5,7,10,7,5,3,1], beat:.30, bass:.052, lead:.022, pad:.017 },
+    zone:{ root:43, scale:[0,4,7,11,7,4,2,7], beat:.29, bass:.048, lead:.024, pad:.014 }
+  };
+  const config = configs[mode] || configs.survival;
+  const i = step % 8;
+  const root = config.root;
+  if(i === 0 || i === 4) playKick(now, mode==='menu' ? .035 : .065);
+  if(mode !== 'menu' && i % 2 === 1) playHat(now + .02, .018);
+  playTone(root - 12 + (i%4===0?0:config.scale[i]*.25), now, config.beat*.78, 'triangle', config.bass, 520);
+  if(i % 2 === 0) playTone(root + 12 + config.scale[i], now + .04, config.beat*.62, mode==='night'?'sawtooth':'square', config.lead, mode==='night'?680:1100);
+  if(i === 0 || i === 4){
+    playTone(root, now, config.beat*2.2, 'sine', config.pad, 480);
+    playTone(root + 7, now + .01, config.beat*2.1, 'sine', config.pad*.75, 520);
+    playTone(root + (mode==='night'?10:12), now + .02, config.beat*2.0, 'sine', config.pad*.55, 560);
+  }
+  musicTimer = config.beat;
+}
+function updateBackgroundMusic(dt){
+  if(!musicEnabled || !audioCtx || !musicMaster) return;
+  if(audioCtx.state === 'suspended') return;
+  const nextMode = getMusicMode();
+  if(nextMode !== musicModeName){
+    musicModeName = nextMode;
+    musicStep = 0;
+    musicTimer = 0;
+  }
+  musicMaster.gain.setTargetAtTime(.13, audioCtx.currentTime, .18);
+  musicTimer -= dt;
+  if(musicTimer <= 0){
+    scheduleMusicStep(musicModeName, musicStep++);
+  }
+}
 function startGame(mode='survival'){
+  startBackgroundMusic();
   if(online.enabled) stopOnlineRoom(false);
   currentMode = mode;
+  if(mode === 'duel') duelRule = selectedDuelRule();
   menu.classList.add('hidden');
   playing = true;
   player.hp = player.maxHp;
   player.invul = 0;
   slideTimer = 0; slideCooldown = 0; player.perchArea = null; player.baseY = 1.75;
   ammo = Math.max(1, getGunDef().mag);
-  reloading = false; scoped = false; scopeEl.classList.remove('on'); crosshair.style.display = 'block';
+  reloading = false; gunInspectTimer = 0; gunInspectTotal = 0; scoped = false; scopeEl.classList.remove('on'); crosshair.style.display = 'block';
   if(currentMode === 'duel'){
     setupDuelMode();
-    showMsg('對狙模式開始：天氣固定早上，Shift 跑步，V 滑鏟，F 可攀爬高台！');
+    showMsg(getDuelStartMessage());
   } else {
     setupSurvivalMode();
     showMsg('生存模式開始：W前S後A左D右，空白鍵跳；隊友倒下要用治療針救！');
@@ -344,10 +529,14 @@ function onKeyDown(e){
   if(e.code === 'Space'){ e.preventDefault(); jumpPlayer(); }
   if(e.code === 'KeyQ') toggleScope();
   if(e.code === 'KeyX') shoot();
+  if(e.code === 'KeyM') toggleMusic();
   if(e.code === 'KeyR') startReload(false);
   if(e.code === 'KeyF') tryChangeFloor();
   if(e.code === 'KeyE' && currentMode !== 'duel') startRevive();
   if(e.code === 'KeyV') startSlide();
+  if(e.code === 'KeyP') tryPlantBomb();
+  if(e.code === 'KeyZ') toggleProne();
+  if(e.code === 'KeyO') startGunInspect();
 }
 function onMouseMove(e){
   if(!pointerLocked || !playing) return;
@@ -368,36 +557,127 @@ function closeShop(){
 }
 
 function setupSurvivalMode(){
+  clearModeObjects();
   setTeammatesVisible(true);
+  arenaHalf = 36.2;
   phase = 'day'; phaseTimer = 30; waveLevel = 1; spawnTimer = .8;
   buildFloor(0);
   duelBot = null; climbSpots = [];
 }
+function selectedDuelRule(){
+  const el = $('duelModeSelect');
+  return el ? el.value : 'onevone';
+}
+function selectedBombRole(){
+  const el = $('bombRoleSelect');
+  const v = el ? el.value : 'attack';
+  if(v === 'random') return Math.random() < .5 ? 'attack' : 'defend';
+  return v;
+}
+function roleText(){ return bombRole === 'attack' ? '進攻方' : '防守方'; }
+function getDuelStartMessage(){
+  if(duelRule === 'bomb') return `經典爆破開始：你是${roleText()}。${bombRole==='attack'?'炸彈在你面前，靠近 A/B 點按 P 裝彈！':'你是防守方，畫面會顯示身份；炸彈被裝上後靠近按住 P 拆彈！'} Z 可以趴下。`;
+  if(duelRule === 'elim') return '經典殲滅開始：5v5，先殺 40 次獲勝，可以一直重生！';
+  if(duelRule === 'zone') return '佔地盤開始：踩點變成我方地盤，先到 100 分獲勝！';
+  return '一般對狙開始：先殺 10 個敵人獲勝，Shift 跑步，V 滑鏟，F 攀爬高台！';
+}
+function clearModeObjects(){
+  modeBots.forEach(b => { if(b.mesh) scene.remove(b.mesh); }); modeBots = [];
+  bombSites = []; captureZones = [];
+  if(carryBombMesh){ camera.remove(carryBombMesh); carryBombMesh = null; }
+  if(duelBot && duelBot.mesh) scene.remove(duelBot.mesh);
+  duelBot = null;
+}
 function setupDuelMode(){
   setTeammatesVisible(false);
   phase = 'day'; phaseTimer = 9999; waveLevel = Math.max(1, waveLevel); spawnTimer = 9999;
-  buildDuelArena();
+  clearModeObjects();
+  player.prone = false; player.dead = false;
+  if(duelRule === 'bomb'){
+    bombRole = selectedBombRole();
+    playerTeam = bombRole === 'attack' ? 'blue' : 'red';
+    enemyTeam = playerTeam === 'blue' ? 'red' : 'blue';
+  } else {
+    bombRole = 'attack'; playerTeam = 'blue'; enemyTeam = 'red';
+  }
+  match = { rule:duelRule, playerKills:0, enemyKills:0, targetKills:duelRule==='onevone'?10:40, blueKills:0, redKills:0, blueScore:0, redScore:0, round:1, maxRounds:5, attackRounds:0, defendRounds:0, state:'playing', timer:0, bomb:null, plantProgress:0, defuseProgress:0, playerDeadTimer:0 };
+  if(duelRule === 'onevone') buildDuelArena();
+  else buildObjectiveArena(duelRule);
   if(online.enabled && duelBot && duelBot.mesh){ scene.remove(duelBot.mesh); duelBot = null; }
 }
 function setTeammatesVisible(show){
   teammates.forEach(m => { m.mesh.visible = show; });
 }
 
-function initFirebase(){
+function loadFirebaseConfigInput(){
+  const el = $('firebaseConfigInput');
+  if(!el) return;
+  const raw = localStorage.getItem('sniperFirebaseConfigText') || '';
+  el.value = raw;
+}
+function extractObjectText(raw){
+  raw = (raw || '').trim();
+  const first = raw.indexOf('{'), last = raw.lastIndexOf('}');
+  if(first < 0 || last <= first) return '';
+  return raw.slice(first, last + 1);
+}
+function parseFirebaseConfigText(raw){
+  const obj = extractObjectText(raw);
+  if(!obj) throw new Error('沒有找到 { ... } 設定，請貼上 firebaseConfig 那一整段。');
+  const json = obj
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '')
+    .replace(/([,{]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":')
+    .replace(/'/g, '"')
+    .replace(/,\s*}/g, '}');
+  const cfg = JSON.parse(json);
+  if(!cfg.apiKey || !cfg.projectId || !cfg.databaseURL) throw new Error('設定需要 apiKey、projectId、databaseURL。請確認你已開啟 Realtime Database。');
+  return cfg;
+}
+function connectManualFirebase(){
+  firebaseReady = false;
+  firebaseConfig = null;
+  return initFirebase(true);
+}
+function clearManualFirebaseConfig(){
+  localStorage.removeItem('sniperFirebaseConfigText');
+  firebaseConfig = null; firebaseReady = false; db = null; roomsRef = null;
+  if(online.unsubscribeRooms){ online.unsubscribeRooms(); online.unsubscribeRooms = null; }
+  loadFirebaseConfigInput();
+  roomListEl.innerHTML = '<div class="shopItem">Firebase 設定已清除。請重新貼上你的 firebaseConfig。</div>';
+  onlineStatus.textContent = '已清除設定。請自己登入 Firebase Console 後，重新貼上設定。';
+}
+function initFirebase(showSuccess=false){
   if(firebaseReady) return true;
   if(!window.firebase || !window.firebase.database){
     onlineStatus.textContent = 'Firebase 套件沒有載入，請確認網路可以連到 Google Firebase CDN。';
     return false;
   }
   try{
+    const input = $('firebaseConfigInput');
+    const raw = input ? input.value.trim() : '';
+    if(!raw){
+      onlineStatus.textContent = '請先登入 Firebase Console，複製你的 firebaseConfig，貼到上方再按「連線」。';
+      return false;
+    }
+    firebaseConfig = parseFirebaseConfigText(raw);
+    localStorage.setItem('sniperFirebaseConfigText', raw);
     if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    else {
+      const currentProject = firebase.app().options && firebase.app().options.projectId;
+      if(currentProject && currentProject !== firebaseConfig.projectId){
+        onlineStatus.textContent = '你換了 Firebase 專案。請重新整理網頁後再按連線。';
+        return false;
+      }
+    }
     db = firebase.database();
     roomsRef = db.ref('sniperDuelRooms');
     firebaseReady = true;
-    onlineStatus.textContent = '已連上房間中心，可以建立房間或加入房間。';
+    onlineStatus.textContent = '已連上你自己的 Firebase 房間中心，可以建立房間或加入房間。';
+    if(showSuccess) listenRooms();
     return true;
   } catch(err){
-    onlineStatus.textContent = 'Firebase 連線失敗：' + err.message;
+    onlineStatus.textContent = 'Firebase 設定錯誤：' + err.message;
     return false;
   }
 }
@@ -405,8 +685,9 @@ function openOnlineLobby(){
   menu.classList.add('hidden');
   onlineLobby.classList.remove('hidden');
   if(document.pointerLockElement) document.exitPointerLock();
-  initFirebase();
-  listenRooms();
+  loadFirebaseConfigInput();
+  if(firebaseReady) listenRooms();
+  else onlineStatus.textContent = '請先登入 Firebase Console，貼上你的 Firebase 設定後按「連線」。';
 }
 function closeOnlineLobby(){
   onlineLobby.classList.add('hidden');
@@ -487,7 +768,7 @@ async function joinOnlineRoom(roomId, asHost=false){
   online.remoteId = null; online.remoteData = null; online.processedEvents.clear();
   onlineLobby.classList.add('hidden');
   menu.classList.add('hidden');
-  currentMode = 'duel'; playing = true;
+  currentMode = 'duel'; duelRule = 'onevone'; playing = true;
   setupDuelMode();
   player.hp = player.maxHp;
   player.baseY = 1.75; player.perchArea = null;
@@ -667,6 +948,10 @@ function skinMaterial(baseColor, emissive=false){
 function rebuildGunModel(){
   while(gunGroup.children.length) gunGroup.remove(gunGroup.children[0]);
   cubeAuraCubes = [];
+  cubeFlashCubes = [];
+  snowAuraFlakes = [];
+  electricAuraRings = [];
+  electricSparkBolts = [];
   killProjector = null; killProjectorCanvas = null; killProjectorCtx = null; killProjectorTexture = null;
   const g = getGunDef();
   const baseMat = skinMaterial(g.color, g.cube);
@@ -674,6 +959,65 @@ function rebuildGunModel(){
   const glassMat = new THREE.MeshStandardMaterial({ color:0x8ff0ff, emissive:0x0c5f7a, transparent:true, opacity:.65, metalness:.2, roughness:.1 });
   function addBox(w,h,d,x,y,z, material=baseMat){ const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), material); mesh.position.set(x,y,z); mesh.castShadow = true; gunGroup.add(mesh); return mesh; }
   function addCyl(r, len, x,y,z, material=baseMat){ const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,16), material); mesh.rotation.x = Math.PI/2; mesh.position.set(x,y,z); mesh.castShadow = true; gunGroup.add(mesh); return mesh; }
+  function addFlashCube(size, x, y, z, colorA=0xffdc58, colorB=0x78f7ff){
+    const useA = Math.random() > .5;
+    const mat = new THREE.MeshStandardMaterial({
+      color: useA ? colorA : colorB,
+      emissive: useA ? colorA : colorB,
+      emissiveIntensity: .8,
+      metalness: .45,
+      roughness: .18,
+      transparent: true,
+      opacity: .96
+    });
+    const cube = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), mat);
+    cube.position.set(x,y,z); cube.castShadow = true;
+    cube.userData.flash = { phase: Math.random()*Math.PI*2, speed: 3 + Math.random()*5, baseScale: .92 + Math.random()*.18 };
+    gunGroup.add(cube); cubeFlashCubes.push(cube);
+    return cube;
+  }
+  function addVoxelBlock(nx, ny, nz, step, ox, oy, oz, opts={}){
+    const centerX = (nx-1)/2, centerY = (ny-1)/2, centerZ = (nz-1)/2;
+    for(let ix=0; ix<nx; ix++) for(let iy=0; iy<ny; iy++) for(let iz=0; iz<nz; iz++) {
+      if(opts.hollow && ix>0 && ix<nx-1 && iy>0 && iy<ny-1 && iz>0 && iz<nz-1) continue;
+      const x = ox + (ix-centerX)*step;
+      const y = oy + (iy-centerY)*step;
+      const z = oz + (iz-centerZ)*step;
+      const cube = addFlashCube(step*.94, x, y, z, opts.colorA || 0xffdc58, opts.colorB || 0x78f7ff);
+      if(opts.spin) cube.userData.spin = opts.spin + (ix+iy+iz)*.08;
+    }
+  }
+  function addSnowflake(size, x, y, z){
+    const group = new THREE.Group();
+    const flakeMat = new THREE.MeshStandardMaterial({ color:0xe8fbff, emissive:0x8be9ff, emissiveIntensity:.75, metalness:.12, roughness:.22, transparent:true, opacity:.92 });
+    const a = new THREE.Mesh(new THREE.BoxGeometry(size*.16,size,size*.16), flakeMat); group.add(a);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(size,size*.16,size*.16), flakeMat); group.add(b);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(size*.72,size*.16,size*.16), flakeMat); c.rotation.z = Math.PI/4; group.add(c);
+    const d = new THREE.Mesh(new THREE.BoxGeometry(size*.72,size*.16,size*.16), flakeMat); d.rotation.z = -Math.PI/4; group.add(d);
+    group.position.set(x,y,z); gunGroup.add(group);
+    group.userData.snow = { base:new THREE.Vector3(x,y,z), phase:Math.random()*Math.PI*2, speed:1.1+Math.random()*1.4, spin:(Math.random()-.5)*2.4 };
+    snowAuraFlakes.push(group); return group;
+  }
+  function addElectricRing(rx, ry, x, y, z){
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(rx, ry, 1.0*ry, 10, 34), new THREE.MeshStandardMaterial({ color:0x79d8ff, emissive:0x2aa8ff, emissiveIntensity:1.1, transparent:true, opacity:.78, metalness:.55, roughness:.18 }));
+    ring.position.set(x,y,z); ring.rotation.y = Math.random()*Math.PI; ring.castShadow = true; gunGroup.add(ring);
+    ring.userData.electric = { base:new THREE.Vector3(x,y,z), phase:Math.random()*Math.PI*2, speed:2.2+Math.random()*1.6, tilt:Math.random()*Math.PI };
+    electricAuraRings.push(ring); return ring;
+  }
+  function addElectricSpark(x1,y1,z1,x2,y2,z2){
+    const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x1,y1,z1), new THREE.Vector3(x2,y2,z2)]);
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color:0x8ce8ff, transparent:true, opacity:.95 }));
+    line.userData.electricSpark = {
+      start:new THREE.Vector3(x1,y1,z1),
+      end:new THREE.Vector3(x2,y2,z2),
+      phase:Math.random()*Math.PI*2,
+      speed:8 + Math.random()*8,
+      amp:.025 + Math.random()*.018
+    };
+    gunGroup.add(line);
+    electricSparkBolts.push(line);
+    return line;
+  }
   function buildKillProjector(){
     killProjectorCanvas = document.createElement('canvas');
     killProjectorCanvas.width = 512; killProjectorCanvas.height = 256;
@@ -688,30 +1032,28 @@ function rebuildGunModel(){
   }
 
   if(g.id === 'cube'){
-    for(let i=0;i<30;i++){
-      const z = -0.1 - i*.035;
-      const s = i%3===0 ? .075 : .052;
-      const cube = addBox(s,s,s, Math.sin(i*.8)*.025, Math.cos(i*.6)*.018, z, skinMaterial(i%2?0xffdc58:0x78f7ff, true));
-      cube.userData.spin = i*.2;
-    }
-    addBox(.34,.16,.55,.02,-.02,.08, baseMat);
-    addBox(.12,.33,.16,.04,-.23,.19, darkMat);
-    addBox(.52,.08,.13,.02,.14,-.05, baseMat);
-    addBox(.18,.18,.18,.02,.25,-.18, glassMat);
+    // 全身都改成發光、閃爍的小方塊狙擊槍。
+    addVoxelBlock(6,3,10, .06, .02, -.03, .02, { hollow:true, spin:.18 });
+    addVoxelBlock(3,5,3, .06, .05, -.19, .18, { spin:.15 });
+    addVoxelBlock(9,2,3, .055, .03, .14, -.04, { hollow:true, spin:.12, colorA:0x8cf7ff, colorB:0xffd95e });
+    addVoxelBlock(3,3,3, .058, .03, .24, -.18, { hollow:false, spin:.10, colorA:0x72ecff, colorB:0xb0ffff });
+    addVoxelBlock(2,2,18, .048, .02, .00, -.42, { hollow:false, spin:.08, colorA:0x78f7ff, colorB:0xffdc58 });
+    addVoxelBlock(2,2,5, .045, .02, .00, -.88, { hollow:false, spin:.05, colorA:0xffffff, colorB:0x9df6ff });
+    addVoxelBlock(3,2,3, .05, -.23, -.03, .08, { hollow:false, colorA:0xffc94d, colorB:0x88f8ff });
 
-    for(let i=0;i<10;i++){
-      const auraMat = new THREE.MeshStandardMaterial({ color:i%2?0xffe066:0x72ecff, emissive:i%2?0xffd43b:0x39d9ff, emissiveIntensity:.8, transparent:true, opacity:.92, metalness:.45, roughness:.18 });
+    for(let i=0;i<18;i++){
+      const auraMat = new THREE.MeshStandardMaterial({ color:i%2?0xffe066:0x72ecff, emissive:i%2?0xffd43b:0x39d9ff, emissiveIntensity:.9, transparent:true, opacity:.92, metalness:.45, roughness:.18 });
       const auraCube = new THREE.Mesh(new THREE.BoxGeometry(.055,.055,.055), auraMat);
       auraCube.castShadow = true;
       auraCube.userData.orbit = {
-        side: i < 5 ? -1 : 1,
-        angle: (i%5)/5 * Math.PI*2,
-        speed: 1.5 + (i%5)*.3,
-        radiusX: .12 + (i%3)*.028,
-        radiusY: .08 + (i%4)*.014,
-        baseX: i < 5 ? -.22 : .22,
-        baseY: .04 + (i%3)*.08,
-        baseZ: -.18 - (i%5)*.12,
+        side: i < 9 ? -1 : 1,
+        angle: (i%9)/9 * Math.PI*2,
+        speed: 1.45 + (i%6)*.24,
+        radiusX: .16 + (i%4)*.03,
+        radiusY: .10 + (i%5)*.015,
+        baseX: i < 9 ? -.26 : .26,
+        baseY: -.02 + (i%4)*.09,
+        baseZ: .08 - (i%9)*.10,
         pulse: i*.55
       };
       gunGroup.add(auraCube);
@@ -731,6 +1073,33 @@ function rebuildGunModel(){
     if(g.id==='thunder'){
       addCyl(.016,.92,-.07,.08,-.41, skinMaterial(0x65f6ff, true));
       addCyl(.016,.92,.11,.08,-.41, skinMaterial(0x65f6ff, true));
+    }
+    if(g.id==='snow'){
+      addBox(.16,.08,.1,.02,.17,-.09,new THREE.MeshStandardMaterial({ color:0xf6fdff, emissive:0x9fe7ff, emissiveIntensity:.55, transparent:true, opacity:.85 }));
+      for(let i=0;i<8;i++) addSnowflake(.13 + (i%3)*.025, (i<4?-1:1)*(.16 + (i%4)*.03), .06 + (i%4)*.06, -.10 - (i%4)*.16);
+    }
+    if(g.id==='electric'){
+      const coilMat = new THREE.MeshStandardMaterial({ color:0x9ceaff, emissive:0x31a7ff, emissiveIntensity:1.1, transparent:true, opacity:.94, metalness:.35, roughness:.2 });
+      addCyl(.018,.74,-.08,.06,-.38, coilMat);
+      addCyl(.018,.74,.12,.06,-.38, coilMat);
+      addCyl(.013,.34,.02,.18,-.72, coilMat);
+      addElectricRing(.12,.015,-.19,.08,.08);
+      addElectricRing(.15,.018,.19,.06,-.08);
+      addElectricRing(.1,.014,.02,.2,-.34);
+      addElectricRing(.085,.012,.02,-.02,.21);
+      addElectricRing(.11,.012,.17,-.10,-.46);
+      addElectricRing(.09,.011,-.17,-.08,-.58);
+      addElectricSpark(-.12,.08,.12,.12,.12,-.06);
+      addElectricSpark(-.16,.05,-.12,.14,.16,-.34);
+      addElectricSpark(-.08,.16,-.62,.11,.02,-.66);
+      addElectricSpark(-.21,.02,.12,.19,.08,-.22);
+      addElectricSpark(.16,-.04,.04,-.12,.16,-.40);
+      addElectricSpark(-.05,.22,-.18,.18,.02,-.76);
+      addElectricSpark(.18,.12,-.56,-.18,-.02,-.72);
+      addElectricSpark(-.13,-.09,-.08,.13,.12,.20);
+      const sparkLight = new THREE.PointLight(0x6ed6ff, 1.35, 2.4);
+      sparkLight.position.set(.02,.1,-.32); gunGroup.add(sparkLight);
+      electricAuraRings.push(sparkLight);
     }
   }
   muzzleFlash = new THREE.Mesh(new THREE.SphereGeometry(.09, 12, 8), new THREE.MeshBasicMaterial({color:0xffffaa, transparent:true, opacity:0}));
@@ -767,10 +1136,13 @@ function updateKillProjector(force=false){
 }
 
 function buildFloor(idx){
+  arenaHalf = 36.2;
   floorIndex = (idx + floorDefs.length) % floorDefs.length;
   if(worldGroup) scene.remove(worldGroup);
   worldGroup = new THREE.Group(); scene.add(worldGroup);
   obstacles = [];
+  clearKillEffects();
+  clearSpecialKillEffects();
   zombies.forEach(z => scene.remove(z.mesh)); zombies = [];
   drops.forEach(d => scene.remove(d.mesh)); drops = [];
   const f = floorDefs[floorIndex];
@@ -929,9 +1301,10 @@ function tryChangeFloor(){
 
 
 function buildDuelArena(){
+  arenaHalf = 36.2;
   if(worldGroup) scene.remove(worldGroup);
   worldGroup = new THREE.Group(); scene.add(worldGroup);
-  obstacles = []; zombies.forEach(z => scene.remove(z.mesh)); zombies = [];
+  obstacles = []; clearKillEffects(); zombies.forEach(z => scene.remove(z.mesh)); zombies = [];
   drops.forEach(d => scene.remove(d.mesh)); drops = []; climbSpots = [];
   currentArenaName = '對狙競技場';
   scene.background = new THREE.Color(0x3d5f74); scene.fog.color.setHex(0x3d5f74); scene.fog.density = .011;
@@ -1002,18 +1375,23 @@ function createDuelBot(){
   duelBot = { mesh:group, hp:160, maxHp:160, speed:6.2, shootCd:.8, seenTimer:0, path:[], pathTimer:0, strafeDir:1, strafeTimer:.3, respawnTimer:0, state:'alive', label:'狙擊機器人' };
   group.userData.duelBot = duelBot;
 }
-function damageDuelBot(bot, amount, label){
+function damageDuelBot(bot, amount, label, byPlayer=true){
   if(!bot || bot.state==='down') return;
   bot.hp -= amount;
   bot.mesh.scale.setScalar(1.04);
   setTimeout(()=>{ if(bot.mesh) bot.mesh.scale.setScalar(1); }, 80);
   if(bot.hp <= 0){
     bot.state='down';
+    if(byPlayer && shouldUseCubeKillEffect()) spawnCubeKillEffect(bot.mesh, [0xff9b96,0x78f7ff,0xffdc58], 1.05);
+    if(byPlayer && shouldUseSnowKillEffect()) spawnSnowWolfKillEffect(bot.mesh);
+    if(byPlayer && shouldUseElectricKillEffect()) spawnElectricStrikeKillEffect(bot.mesh);
     const earn = 280 + Math.round(Math.random()*90);
     save.cash += earn; save.kills++; persist(); updateKillProjector();
-    showMsg((label || '擊倒對手') + ' +$' + earn);
+    if(duelRule === 'onevone') match.playerKills++;
+    showMsg((label || '擊倒對手') + ' +$' + earn + (duelRule==='onevone' ? `｜比分 ${match.playerKills}:${match.enemyKills}` : ''));
     scene.remove(bot.mesh);
     bot.respawnTimer = 1.4;
+    if(duelRule === 'onevone' && match.playerKills >= 10){ finishDuelMatch(true, `一般對狙勝利！你 ${match.playerKills}：敵人 ${match.enemyKills}`); }
   }
 }
 function lineBlocked(a,b,pad=.15){
@@ -1027,6 +1405,341 @@ function lineBlocked(a,b,pad=.15){
   }
   return false;
 }
+
+function buildObjectiveArena(rule){
+  if(worldGroup) scene.remove(worldGroup);
+  worldGroup = new THREE.Group(); scene.add(worldGroup);
+  obstacles = []; zombies.forEach(z => scene.remove(z.mesh)); zombies = [];
+  drops.forEach(d => scene.remove(d.mesh)); drops = []; climbSpots = []; bombSites = []; captureZones = [];
+  arenaHalf = rule === 'bomb' ? 108 : 72;
+  currentArenaName = rule === 'bomb' ? '經典爆破 5v5' : rule === 'elim' ? '經典殲滅 5v5' : '佔地盤 5v5';
+  scene.background = new THREE.Color(0x486f86); scene.fog.color.setHex(0x486f86); scene.fog.density = rule === 'bomb' ? .006 : .008;
+  const size = arenaHalf*2 + 4;
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(size,.4,size), mat(0xc6b98f,.95,.02));
+  floor.position.y = -0.25; floor.receiveShadow = true; worldGroup.add(floor);
+  addObstacle(0, -arenaHalf-1, size, 1.4, 4, 0x7b6848); addObstacle(0, arenaHalf+1, size, 1.4, 4, 0x7b6848);
+  addObstacle(-arenaHalf-1, 0, 1.4, size, 4, 0x7b6848); addObstacle(arenaHalf+1, 0, 1.4, size, 4, 0x7b6848);
+  // 大型隊戰掩體：場地是 1v1 的 2~3 倍，掩體更高。
+  const blocks = rule === 'bomb' ? [
+    [-50,-38,15,4,3.2],[-16,-45,4,20,3.4],[24,-44,18,4,3.1],[58,-22,4,24,3.3],
+    [-68,0,18,4,3.2],[-28,8,4,26,3.5],[18,0,22,4,3.2],[48,16,4,28,3.4],
+    [-54,46,4,20,3.2],[-10,44,20,4,3.1],[35,42,4,22,3.4],[72,58,16,4,3.2]
+  ] : [
+    [-42,-32,15,4,3.0],[-10,-28,4,18,3.1],[28,-26,18,4,3.0],
+    [-52,2,4,24,3.3],[-16,5,22,4,3.0],[22,10,4,24,3.2],[52,0,18,4,3.1],
+    [-34,34,18,4,3.0],[5,38,4,20,3.2],[42,32,16,4,3.0]
+  ];
+  blocks.forEach((b,i)=> addPropBox(b[0],b[1],b[2],b[3],b[4], i%2?0x4f5963:0x6b5a3d));
+  addClimbSpot('西側高台', new THREE.Vector3(-arenaHalf+13,1.75,-8), new THREE.Vector3(-arenaHalf+10,5.2,-8), {minX:-arenaHalf+6,maxX:-arenaHalf+18,minZ:-14,maxZ:-2});
+  addClimbSpot('東側高台', new THREE.Vector3(arenaHalf-13,1.75,8), new THREE.Vector3(arenaHalf-10,5.2,8), {minX:arenaHalf-18,maxX:arenaHalf-6,minZ:2,maxZ:14});
+  addObstacle(-arenaHalf+10,-8,8,8,4.8,0x5a5f6f,false); addObstacle(arenaHalf-10,8,8,8,4.8,0x5a5f6f,false);
+  if(rule === 'bomb'){
+    addBombSite('A', new THREE.Vector3(-52,0,-8));
+    addBombSite('B', new THREE.Vector3(52,0,16));
+  }
+  if(rule === 'zone'){
+    addCaptureZone('左區', new THREE.Vector3(-38,0,0));
+    addCaptureZone('中區', new THREE.Vector3(0,0,0));
+    addCaptureZone('右區', new THREE.Vector3(38,0,0));
+  }
+  rebuildNavGrid();
+  player.baseY = 1.75; player.perchArea = null; player.dead = false; player.prone = false;
+  const playerZ = rule === 'bomb' && playerTeam === 'red' ? -arenaHalf + 13 : arenaHalf - 13;
+  player.pos.set(0,1.75,playerZ); yaw = playerTeam === 'red' ? Math.PI : 0; pitch = 0;
+  player.vy = 0; player.grounded = true; player.hp = player.maxHp;
+  spawnTeamBots(rule);
+  updateCarryBombModel();
+  updateHUD();
+}
+function addBombSite(label, pos){
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(5.2,.16,10,80), new THREE.MeshBasicMaterial({color:0xffd85e, transparent:true, opacity:.92}));
+  ring.rotation.x = Math.PI/2; ring.position.set(pos.x,.16,pos.z); worldGroup.add(ring);
+  const core = new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.28,24), new THREE.MeshStandardMaterial({color:0x24201a, emissive:0xffd85e, emissiveIntensity:.25}));
+  core.position.set(pos.x,.15,pos.z); worldGroup.add(core);
+  bombSites.push({label,pos,mesh:ring,planted:false});
+}
+function createCarryBombModel(){
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({color:0x20242a, metalness:.35, roughness:.42});
+  const redMat = new THREE.MeshStandardMaterial({color:0xff3434, emissive:0xff1010, emissiveIntensity:.8});
+  const wireMat = new THREE.MeshStandardMaterial({color:0xffd45a, emissive:0x4a2900, emissiveIntensity:.35});
+  const box = new THREE.Mesh(new THREE.BoxGeometry(.34,.22,.22), bodyMat); box.castShadow = true; group.add(box);
+  const light = new THREE.Mesh(new THREE.SphereGeometry(.045,12,8), redMat); light.position.set(.13,.08,-.03); group.add(light);
+  const cyl1 = new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.42,12), wireMat); cyl1.rotation.z = Math.PI/2; cyl1.position.set(0,.14,0); group.add(cyl1);
+  const cyl2 = new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.32,12), wireMat); cyl2.rotation.x = Math.PI/2; cyl2.position.set(-.05,-.02,.14); group.add(cyl2);
+  group.position.set(-.42,-.52,-.86);
+  group.rotation.set(.18,-.12,.08);
+  group.userData.blink = light;
+  return group;
+}
+function updateCarryBombModel(){
+  if(carryBombMesh){ camera.remove(carryBombMesh); carryBombMesh = null; }
+  if(currentMode === 'duel' && duelRule === 'bomb' && bombRole === 'attack'){
+    carryBombMesh = createCarryBombModel();
+    camera.add(carryBombMesh);
+    updateCarryBombVisibility();
+  }
+}
+function updateCarryBombVisibility(){
+  if(!carryBombMesh) return;
+  carryBombMesh.visible = currentMode === 'duel' && duelRule === 'bomb' && bombRole === 'attack' && !match.bomb && !player.dead && match.state === 'playing';
+  if(carryBombMesh.visible){
+    carryBombMesh.rotation.y = -.12 + Math.sin(performance.now()*.005)*.04;
+    const blink = carryBombMesh.userData.blink;
+    if(blink && blink.material) blink.material.emissiveIntensity = .55 + Math.sin(performance.now()*.009)*.35;
+  }
+}
+function addCaptureZone(label, pos){
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(7.2,.18,10,96), new THREE.MeshBasicMaterial({color:0xd9e7ff, transparent:true, opacity:.72}));
+  ring.rotation.x = Math.PI/2; ring.position.set(pos.x,.13,pos.z); worldGroup.add(ring);
+  captureZones.push({label,pos,owner:'neutral',mesh:ring});
+}
+function spawnTeamBots(rule){
+  modeBots.forEach(b=>{ if(b.mesh) scene.remove(b.mesh); }); modeBots = [];
+  const h = arenaHalf;
+  const blueAll = [new THREE.Vector3(0,0,h-13), new THREE.Vector3(-9,0,h-17), new THREE.Vector3(9,0,h-17), new THREE.Vector3(-18,0,h-26), new THREE.Vector3(18,0,h-26)];
+  const redAll = [new THREE.Vector3(0,0,-h+13), new THREE.Vector3(-12,0,-h+17), new THREE.Vector3(12,0,-h+17), new THREE.Vector3(-24,0,-h+25), new THREE.Vector3(24,0,-h+25)];
+  const blueSpawns = playerTeam === 'blue' ? blueAll.slice(1) : blueAll;
+  const redSpawns = playerTeam === 'red' ? redAll.slice(1) : redAll;
+  blueSpawns.forEach((p,i)=> createModeBot('blue', (playerTeam==='blue'?'隊友':'進攻敵人')+(i+1), p, playerTeam==='blue'?0x58b8ff:0xff5d74));
+  redSpawns.forEach((p,i)=> createModeBot('red', (playerTeam==='red'?'隊友':'防守敵人')+(i+1), p, playerTeam==='red'?0x58b8ff:0xff5d74));
+}
+function createModeBot(team, name, pos, color){
+  const group = new THREE.Group();
+  const bodyMat = mat(color), skin = mat(0xf0c9a6), gunM = mat(0x1b2026);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(.78,1.05,.48), bodyMat); body.position.y=1.05; body.userData.part='body'; group.add(body);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(.56,.56,.56), skin); head.position.y=1.86; head.userData.part='head'; group.add(head);
+  const gun = new THREE.Mesh(new THREE.BoxGeometry(.2,.18,1.15), gunM); gun.position.set(.42,1.3,-.45); group.add(gun);
+  group.position.copy(pos);
+  group.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.userData.modeBotRoot = group; } });
+  scene.add(group);
+  const bot = {team,name,mesh:group,spawn:pos.clone(),hp:100,maxHp:100,state:'alive',shootCd:.4+Math.random()*.5,respawnTimer:0,path:[],pathTimer:0,role:team==='blue'?'attack':'defend'};
+  group.userData.modeBot = bot;
+  modeBots.push(bot);
+  return bot;
+}
+function resetModeRound(){
+  modeBots.forEach(b=>{ b.state='alive'; b.hp=b.maxHp; b.mesh.visible=true; b.mesh.position.copy(b.spawn); b.path=[]; b.respawnTimer=0; });
+  const playerZ = duelRule === 'bomb' && playerTeam === 'red' ? -arenaHalf + 13 : arenaHalf - 13;
+  player.dead=false; player.hp=player.maxHp; player.baseY=1.75; player.prone=false; player.pos.set(0,1.75,playerZ); yaw = playerTeam === 'red' ? Math.PI : 0; player.vy=0; player.grounded=true;
+  match.bomb=null; match.plantProgress=0; match.defuseProgress=0; match.state='playing'; match.timer=0;
+  bombSites.forEach(s=>{ s.planted=false; if(s.mesh) s.mesh.material.color.setHex(0xffd85e); });
+  updateCarryBombVisibility();
+}
+function finishDuelMatch(win, msg){
+  playing = false;
+  if(document.pointerLockElement) document.exitPointerLock();
+  centerMsg.classList.remove('show');
+  menu.classList.remove('hidden');
+  menu.querySelector('h1').textContent = win ? '你贏了！' : '你輸了！';
+  menu.querySelector('p').innerHTML = msg || getModeStatusText();
+  reloading = false; reloadBox.classList.remove('show'); ammo = getGunDef().mag;
+}
+function endBombRound(winner, reason){
+  if(match.state === 'roundEnd') return;
+  if(winner === 'blue') match.attackRounds++; else match.defendRounds++;
+  match.state = 'roundEnd'; match.timer = 3;
+  showMsg((winner === 'blue' ? '進攻方勝利：' : '防守方勝利：') + reason);
+  if(match.round >= match.maxRounds){
+    const attackWon = match.attackRounds > match.defendRounds;
+    const win = playerTeam === 'blue' ? attackWon : !attackWon;
+    finishDuelMatch(win, `爆破結束：進攻方 ${match.attackRounds}：防守方 ${match.defendRounds}<br>${win?'你方獲勝！':'你方失敗！'}`);
+  }
+}
+function tryPlantBomb(){
+  if(currentMode !== 'duel' || duelRule !== 'bomb' || player.dead || match.state !== 'playing') return;
+  if(bombRole === 'defend'){
+    if(match.bomb) showMsg('你是防守方：靠近炸彈按住 P 拆彈！');
+    else showMsg('你是防守方：等待敵方裝彈，守住 A / B 點！');
+    return;
+  }
+  if(match.bomb) return;
+  const site = bombSites.find(s => player.pos.distanceTo(new THREE.Vector3(s.pos.x, player.pos.y, s.pos.z)) < 7);
+  if(!site){ showMsg('要站在 A 或 B 安裝點裡，才能按 P 裝彈'); return; }
+  match.plantSite = site; match.plantProgress = 0.01; showMsg('開始裝彈，站在安裝點內不要離開！');
+}
+function startGunInspect(){
+  if(!playing || !gunGroup || reloading || player.dead) return;
+  gunInspectTotal = 2.35;
+  gunInspectTimer = gunInspectTotal;
+  showMsg('槍械檢視：' + getGunDef().name + '，按 O 可以欣賞狙擊槍外觀！');
+}
+function toggleProne(){
+  if(currentMode !== 'duel' || player.dead || player.perchArea) return;
+  player.prone = !player.prone;
+  player.baseY = player.prone ? 1.05 : 1.75;
+  if(player.grounded) player.pos.y = player.baseY;
+  showMsg(player.prone ? '你趴下了：更難被打中，但移動變慢。' : '你站起來了。');
+}
+function updateObjectiveMode(dt){
+  if(currentMode !== 'duel' || duelRule === 'onevone' || online.enabled) return;
+  if(match.playerDeadTimer > 0){ match.playerDeadTimer -= dt; if(match.playerDeadTimer <= 0 && duelRule !== 'bomb') respawnModePlayer(); }
+  if(duelRule === 'bomb' && match.state === 'roundEnd'){ updateBombMode(dt); return; }
+  updateModeBots(dt);
+  if(duelRule === 'bomb') updateBombMode(dt);
+  if(duelRule === 'elim') updateElimMode(dt);
+  if(duelRule === 'zone') updateZoneMode(dt);
+}
+function updateBombMode(dt){
+  if(match.state === 'roundEnd'){
+    match.timer -= dt;
+    if(match.timer <= 0 && playing){ match.round++; resetModeRound(); showMsg('第 ' + match.round + ' 回合開始！'); }
+    return;
+  }
+  if(match.plantProgress > 0 && !match.bomb){
+    const s = match.plantSite;
+    if(player.dead || !s || player.pos.distanceTo(new THREE.Vector3(s.pos.x, player.pos.y, s.pos.z)) > 7){ match.plantProgress=0; showMsg('裝彈中斷！'); }
+    else { match.plantProgress += dt; if(match.plantProgress >= 3){ match.bomb = {site:s, timer:60}; s.planted=true; s.mesh.material.color.setHex(0xff3030); updateCarryBombVisibility(); showMsg('炸彈已安裝！防守方 1 分鐘內拆不掉就輸。'); } }
+  }
+  if(match.bomb){
+    match.bomb.timer -= dt;
+    let defusers = 0;
+    modeBots.forEach(b=>{ if(b.team==='red' && b.state==='alive' && b.mesh.position.distanceTo(match.bomb.site.pos)<5.5) defusers++; });
+    const playerDefusing = bombRole === 'defend' && !player.dead && keys.KeyP && player.pos.distanceTo(new THREE.Vector3(match.bomb.site.pos.x, player.pos.y, match.bomb.site.pos.z)) < 5.8;
+    if(playerDefusing) defusers++;
+    match.defuseProgress = defusers>0 ? match.defuseProgress + dt : Math.max(0, match.defuseProgress - dt*.6);
+    if(playerDefusing) showMsg('你是防守方：拆彈中 ' + match.defuseProgress.toFixed(1) + '/4 秒');
+    if(match.defuseProgress >= 4) endBombRound('red','炸彈被拆除');
+    else if(match.bomb.timer <= 0) endBombRound('blue','炸彈爆炸');
+  } else {
+    const redAlive = (playerTeam==='red' && !player.dead) || modeBots.some(b=>b.team==='red' && b.state==='alive');
+    const blueAlive = (playerTeam==='blue' && !player.dead) || modeBots.some(b=>b.team==='blue' && b.state==='alive');
+    if(!redAlive) endBombRound('blue','防守方全滅');
+    else if(!blueAlive) endBombRound('red','進攻方裝彈前全滅');
+  }
+}
+function updateElimMode(dt){
+  if(match.blueKills >= 40) finishDuelMatch(true, '經典殲滅勝利！你方先殺到 40 次。');
+  if(match.redKills >= 40) finishDuelMatch(false, '經典殲滅失敗！敵方先殺到 40 次。');
+}
+function updateZoneMode(dt){
+  captureZones.forEach(z=>{
+    let blue = player.dead ? 0 : (player.pos.distanceTo(z.pos) < 8 ? 1 : 0);
+    let red = 0;
+    modeBots.forEach(b=>{ if(b.state==='alive' && b.mesh.position.distanceTo(z.pos)<8){ if(b.team==='blue') blue++; else red++; } });
+    if(blue > red) z.owner = 'blue'; else if(red > blue) z.owner = 'red';
+    if(z.mesh){ z.mesh.material.color.setHex(z.owner==='blue'?0x4fb8ff:z.owner==='red'?0xff4d5f:0xd9e7ff); }
+  });
+  const blueOwned = captureZones.filter(z=>z.owner==='blue').length;
+  const redOwned = captureZones.filter(z=>z.owner==='red').length;
+  match.blueScore = Math.min(100, match.blueScore + blueOwned * dt * 2.2);
+  match.redScore = Math.min(100, match.redScore + redOwned * dt * 2.2);
+  if(match.blueScore >= 100) finishDuelMatch(true, '佔地盤勝利！你方先到 100 分。');
+  if(match.redScore >= 100) finishDuelMatch(false, '佔地盤失敗！敵方先到 100 分。');
+}
+function updateModeBots(dt){
+  modeBots.forEach(b=>{
+    if(b.state !== 'alive'){
+      if(duelRule !== 'bomb'){ b.respawnTimer -= dt; if(b.respawnTimer <= 0){ b.state='alive'; b.hp=b.maxHp; b.mesh.visible=true; b.mesh.position.copy(b.spawn); } }
+      return;
+    }
+    const target = chooseModeBotTarget(b);
+    const targetPos = target ? getEntityPosition(target) : null;
+    let objective = null;
+    if(duelRule === 'bomb'){
+      if(b.team==='red' && match.bomb) objective = match.bomb.site.pos;
+      else if(b.team==='blue' && !match.bomb) objective = (bombSites[b.name.endsWith('1') || b.name.endsWith('2') ? 0 : 1] || bombSites[0])?.pos;
+    }
+    if(duelRule === 'zone'){
+      const zone = captureZones.reduce((best,z)=> !best || b.mesh.position.distanceTo(z.pos) < b.mesh.position.distanceTo(best.pos) ? z : best, null);
+      if(zone) objective = zone.pos;
+    }
+    if(targetPos && b.mesh.position.distanceTo(targetPos) < 58){
+      const face = targetPos.clone().sub(b.mesh.position); b.mesh.rotation.y = Math.atan2(face.x, face.z);
+      b.shootCd -= dt;
+      if(b.shootCd <= 0){ b.shootCd = .55 + Math.random()*.55; botShootEntity(b, target); }
+      strafeBot(b, face, dt);
+    } else if(objective){ moveBotToward(b, objective, dt); }
+    else if(targetPos) moveBotToward(b, targetPos, dt);
+  });
+}
+function chooseModeBotTarget(bot){
+  const candidates = [];
+  if(bot.team !== playerTeam && !player.dead) candidates.push(player);
+  modeBots.forEach(b=>{ if(b.state==='alive' && b.team !== bot.team) candidates.push(b); });
+  let best=null, bd=9999;
+  candidates.forEach(c=>{ const p=getEntityPosition(c); const d=bot.mesh.position.distanceTo(p); if(d<bd){ bd=d; best=c; } });
+  return best;
+}
+function getEntityPosition(e){ return e === player ? player.pos : e.mesh.position; }
+function strafeBot(bot, face, dt){
+  const dir = new THREE.Vector3(-face.z,0,face.x); if(dir.lengthSq()>0) dir.normalize();
+  if(!bot.strafeDir) bot.strafeDir = Math.random()<.5?-1:1;
+  if(Math.random()<.02) bot.strafeDir *= -1;
+  tryMove(bot.mesh.position, dir.multiplyScalar(bot.strafeDir * 3.2 * dt), .48);
+}
+function moveBotToward(bot, pos, dt){
+  const mv = pos.clone().sub(bot.mesh.position); mv.y=0;
+  if(mv.lengthSq()<1) return;
+  bot.mesh.rotation.y = Math.atan2(mv.x, mv.z);
+  tryMove(bot.mesh.position, mv.normalize().multiplyScalar(4.8*dt), .48);
+}
+function botShootEntity(bot, target){
+  const origin = bot.mesh.position.clone().add(new THREE.Vector3(0,1.7,0));
+  const targetPos = getEntityPosition(target).clone().add(new THREE.Vector3(0, target===player ? .25 : 1.45, 0));
+  const through = lineBlocked(origin, targetPos, .18);
+  const dist = origin.distanceTo(targetPos);
+  const miss = 0.75 + dist*.018 + (through?1.2:0) + (target===player && (slideTimer>0 || player.prone) ? 1.1 : 0);
+  const aim = targetPos.clone().add(new THREE.Vector3((Math.random()-.5)*miss, (Math.random()-.5)*miss*.4, (Math.random()-.5)*miss));
+  addTracer(origin, aim, bot.team==='blue'?0x69d7ff:0xff7b75);
+  const hit = aim.distanceTo(targetPos) < .85;
+  if(!hit) return;
+  if(target === player){
+    if(player.invul<=0 && !player.dead){ player.hp -= through?24:34; player.invul=.25; hurtTimer=.45; }
+  } else damageModeBot(target, through?30:42, bot.team, false);
+}
+function damageModeBot(bot, amount, killerTeam='blue', byPlayer=true){
+  if(!bot || bot.state!=='alive') return;
+  bot.hp -= amount; bot.mesh.scale.setScalar(1.04);
+  setTimeout(()=>{ if(bot.mesh) bot.mesh.scale.setScalar(1); },80);
+  if(bot.hp <= 0) killModeBot(bot, killerTeam, byPlayer);
+}
+function killModeBot(bot, killerTeam='blue', byPlayer=false){
+  bot.state='down'; bot.hp=0;
+  if(byPlayer && shouldUseCubeKillEffect()) spawnCubeKillEffect(bot.mesh, bot.team==='blue' ? [0x6cc9ff,0x78f7ff,0xffffff] : [0xff6a78,0xffdc58,0xffffff], 1.02);
+  if(byPlayer && shouldUseSnowKillEffect()) spawnSnowWolfKillEffect(bot.mesh);
+  if(byPlayer && shouldUseElectricKillEffect()) spawnElectricStrikeKillEffect(bot.mesh);
+  bot.mesh.visible=false; bot.respawnTimer = 2.4;
+  if(killerTeam==='blue'){ match.blueKills++; if(byPlayer){ save.kills++; save.cash += 90; persist(); updateKillProjector(); } }
+  else match.redKills++;
+  if(duelRule==='bomb') bot.respawnTimer = 999;
+}
+function respawnModePlayer(msg='你重生了！'){
+  const playerZ = duelRule === 'bomb' && playerTeam === 'red' ? -arenaHalf + 13 : arenaHalf - 13;
+  player.dead=false; player.hp=player.maxHp; player.invul=1; player.baseY=1.75; player.perchArea=null; player.prone=false; player.vy=0; player.grounded=true; player.pos.set(0,1.75,playerZ); showMsg(msg);
+}
+function handlePlayerDefeat(){
+  if(currentMode !== 'duel'){ gameOver(); return; }
+  if(duelRule === 'onevone'){
+    match.enemyKills++;
+    if(match.enemyKills >= 10){ finishDuelMatch(false, `一般對狙結束：你 ${match.playerKills}：敵人 ${match.enemyKills}`); return; }
+    player.hp = player.maxHp; player.invul=1; player.pos.set(0,1.75,28); showMsg(`你被擊倒！比分 ${match.playerKills}:${match.enemyKills}`); return;
+  }
+  if(!player.dead){ if(playerTeam === 'blue') match.redKills++; else match.blueKills++; }
+  if(duelRule === 'bomb'){
+    player.dead = true; player.hp = 0; player.invul = 1;
+    showMsg('你死了，要等下一回合才能重生。'); match.playerDeadTimer = 999;
+  } else if(duelRule === 'elim' || duelRule === 'zone'){
+    respawnModePlayer('你被擊倒，已直接重生！');
+  } else {
+    player.dead = true; player.hp = 0; player.invul = 1;
+    showMsg('你死了，等待重生。'); match.playerDeadTimer = .05;
+  }
+}
+function getModeStatusText(){
+  if(currentMode !== 'duel') return '';
+  if(online.enabled) return '線上對狙';
+  if(duelRule === 'onevone') return `一般對狙：你 ${match.playerKills}/10｜敵人 ${match.enemyKills}/10`;
+  if(duelRule === 'bomb'){
+    const role = bombRole === 'attack' ? '你是進攻方｜面前有炸彈' : '你是防守方｜守點 / 按住 P 拆彈';
+    const bomb = match.bomb ? `｜炸彈 ${Math.ceil(match.bomb.timer)} 秒｜拆彈 ${match.defuseProgress.toFixed(1)}/4` : (match.plantProgress>0 ? `｜裝彈 ${Math.round(match.plantProgress/3*100)}%` : '｜未裝彈');
+    return `經典爆破：${role}｜第 ${match.round}/5 回合｜進攻 ${match.attackRounds}：防守 ${match.defendRounds}${bomb}`;
+  }
+  if(duelRule === 'elim') return `經典殲滅：我方 ${match.blueKills}/40｜敵方 ${match.redKills}/40`;
+  if(duelRule === 'zone') return `佔地盤：我方 ${Math.floor(match.blueScore)}/100｜敵方 ${Math.floor(match.redScore)}/100`;
+  return '';
+}
+
 function makeMate(name, color, pos){
   const group = new THREE.Group();
   const bodyMat = mat(color), skin = mat(0xf3bf8b), gunM = mat(0x20252b);
@@ -1083,6 +1796,7 @@ function animate(){
   rainbowHue = (rainbowHue + dt*.18) % 1;
   if(playing && shop.classList.contains('hidden')) update(dt);
   animateGun(dt);
+  updateBackgroundMusic(dt);
   renderer.render(scene, camera);
 }
 function update(dt){
@@ -1091,22 +1805,27 @@ function update(dt){
   if(slideCooldown > 0) slideCooldown -= dt;
   if(currentMode !== 'duel') updatePhase(dt);
   updatePlayer(dt);
-  if(currentMode === 'duel' && !online.enabled) updateDuelBot(dt);
-  else {
+  if(currentMode === 'duel' && !online.enabled){
+    if(duelRule === 'onevone') updateDuelBot(dt);
+    else updateObjectiveMode(dt);
+  } else {
     updateTeammates(dt);
     spawnLogic(dt);
     updateZombies(dt);
     updateRevive(dt);
   }
   updateBullets(dt);
+  updateKillEffects(dt);
+  updateSpecialKillEffects(dt);
   updateDrops(dt);
   updateReload(dt);
+  updateCarryBombVisibility();
   updateHUD();
   sendOnlineState(dt);
   drawMiniMap();
   if(hurtTimer>0){ hurtTimer-=dt; damageVignette.style.opacity = Math.max(0, Math.min(.7,hurtTimer*2)); }
   if(msgTimer>0){ msgTimer-=dt; if(msgTimer<=0) centerMsg.classList.remove('show'); }
-  if(player.hp <= 0){ if(online.enabled) respawnOnlinePlayer('你被擊倒了，重新出生！'); else gameOver(); }
+  if(player.hp <= 0){ if(online.enabled) respawnOnlinePlayer('你被擊倒了，重新出生！'); else handlePlayerDefeat(); }
 }
 function updatePhase(dt){
   if(currentMode === 'duel') return;
@@ -1146,8 +1865,10 @@ function updateJump(dt){
   }
 }
 function updatePlayer(dt){
+  if(player.dead){ camera.position.copy(player.pos); camera.rotation.y = yaw; camera.rotation.x = pitch; return; }
   updateJump(dt);
   let speed = scoped ? 3.1 : 6.4;
+  if(player.prone) speed = 2.2;
   const sprinting = (keys.ShiftLeft || keys.ShiftRight) && moveIntentActive() && player.grounded && slideTimer <= 0;
   if(sprinting) speed = scoped ? 4.2 : 9.4;
   // FPS 正確方向：你視角轉到哪裡，W 就往哪裡走；S 往後，A/D 左右平移。
@@ -1168,8 +1889,8 @@ function updatePlayer(dt){
     player.pos.x = THREE.MathUtils.clamp(player.pos.x, a.minX, a.maxX);
     player.pos.z = THREE.MathUtils.clamp(player.pos.z, a.minZ, a.maxZ);
   } else {
-    player.pos.x = THREE.MathUtils.clamp(player.pos.x, -36.2, 36.2);
-    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -36.2, 36.2);
+    player.pos.x = THREE.MathUtils.clamp(player.pos.x, -arenaHalf, arenaHalf);
+    player.pos.z = THREE.MathUtils.clamp(player.pos.z, -arenaHalf, arenaHalf);
   }
   camera.position.copy(player.pos);
   camera.rotation.y = yaw; camera.rotation.x = pitch;
@@ -1257,7 +1978,8 @@ function toggleScope(){
   gunGroup.position.set(scoped ? .18 : .38, scoped ? -.45 : -.34, scoped ? -.58 : -.76);
 }
 function shoot(){
-  if(shootCooldown > 0 || reloading || !playing || !shop.classList.contains('hidden')) return;
+  if(player.dead) return;
+  if(shootCooldown > 0 || reloading || gunInspectTimer > 0 || !playing || !shop.classList.contains('hidden')) return;
   const g = getGunDef();
   if(ammo <= 0){ startReload(true); return; }
   ammo--;
@@ -1270,7 +1992,8 @@ function shoot(){
   raycaster.set(origin, dir); raycaster.far = g.range;
   const targets = [];
   zombies.forEach(z => z.mesh.traverse(o => { if(o.isMesh) targets.push(o); }));
-  if(currentMode === 'duel' && !online.enabled && duelBot && duelBot.state === 'alive') duelBot.mesh.traverse(o => { if(o.isMesh) targets.push(o); });
+  if(currentMode === 'duel' && !online.enabled && duelRule === 'onevone' && duelBot && duelBot.state === 'alive') duelBot.mesh.traverse(o => { if(o.isMesh) targets.push(o); });
+  if(currentMode === 'duel' && !online.enabled && duelRule !== 'onevone') modeBots.forEach(b => { if(b.team===enemyTeam && b.state==='alive') b.mesh.traverse(o => { if(o.isMesh) targets.push(o); }); });
   if(online.enabled && online.remoteMesh && online.remoteMesh.visible) online.remoteMesh.traverse(o => { if(o.isMesh) targets.push(o); });
   const hits = raycaster.intersectObjects(targets, false);
   let damage = getGunDamage();
@@ -1282,44 +2005,291 @@ function shoot(){
     if(scoped && Math.random() < .18) damage *= 1.5;
     if(hit.object.userData.zombieRoot){
       hitEnemy = hit.object.userData.zombieRoot.userData.zombie;
-      damageZombie(hitEnemy, damage, headshot ? '爆頭！' : '命中！');
+      damageZombie(hitEnemy, damage, headshot ? '爆頭！' : '命中！', true);
       if(g.id === 'thunder' || g.id === 'cube'){
         zombies.forEach(z => {
           if(z === hitEnemy) return;
           const to = z.mesh.position.clone().sub(origin); const along = to.dot(dir);
-          if(along > 0 && along < g.range){ const closest = origin.clone().add(dir.clone().multiplyScalar(along)); if(closest.distanceTo(z.mesh.position) < 1.8) damageZombie(z, damage*.45, '穿透'); }
+          if(along > 0 && along < g.range){ const closest = origin.clone().add(dir.clone().multiplyScalar(along)); if(closest.distanceTo(z.mesh.position) < 1.8) damageZombie(z, damage*.45, '穿透', true); }
         });
       }
     } else if(hit.object.userData.duelBotRoot){
       hitEnemy = duelBot;
       const throughWall = currentMode === 'duel' && lineBlocked(origin, hit.point || duelBot.mesh.position, .18);
       if(throughWall) damage *= 0.82;
-      damageDuelBot(duelBot, damage, throughWall ? (headshot ? '穿牆爆頭！' : '穿牆命中！') : (headshot ? '爆頭擊倒對手！' : '命中對手！'));
+      damageDuelBot(duelBot, damage, throughWall ? (headshot ? '穿牆爆頭！' : '穿牆命中！') : (headshot ? '爆頭擊倒對手！' : '命中對手！'), true);
+    } else if(hit.object.userData.modeBotRoot){
+      const root = hit.object.userData.modeBotRoot;
+      hitEnemy = root.userData.modeBot;
+      const throughWall = currentMode === 'duel' && lineBlocked(origin, hit.point || root.position, .18);
+      damageModeBot(hitEnemy, damage * (throughWall ? .82 : 1), playerTeam, true);
+      showMsg(throughWall ? (headshot ? '穿牆爆頭！' : '穿牆命中！') : (headshot ? '爆頭！' : '命中敵人！'));
     }
   }
   const endPoint = origin.clone().add(dir.multiplyScalar(g.range));
   const wallShot = currentMode === 'duel' && lineBlocked(origin, hitEnemy && hitEnemy.position ? hitEnemy.position : endPoint, .18);
-  addTracer(origin, endPoint, hitEnemy ? (currentMode === 'duel' ? 0xd78aff : 0xffff99) : 0x86eaff);
+  if(g.id === 'electric') addLightningTracer(origin, endPoint, 0x67cfff);
+  else if(g.id === 'snow') addTracer(origin, endPoint, hitEnemy ? 0xe9fbff : 0xb9eeff);
+  else addTracer(origin, endPoint, hitEnemy ? (currentMode === 'duel' ? 0xd78aff : 0xffff99) : 0x86eaff);
   if(online.enabled) sendOnlineShot(origin, endPoint, wallShot);
 }
-function damageZombie(z, amount, label){
+function damageZombie(z, amount, label, byPlayer=false){
   z.hp -= amount;
   z.mesh.scale.setScalar(1 + Math.min(.25, amount/900));
   setTimeout(()=>{ if(z.mesh) z.mesh.scale.setScalar(z.type==='tank'?1.35:1); }, 70);
-  if(z.hp <= 0) killZombie(z, label);
+  if(z.hp <= 0) killZombie(z, label, byPlayer);
 }
-function killZombie(z, label){
+function killZombie(z, label, byPlayer=false){
   const idx = zombies.indexOf(z); if(idx>=0) zombies.splice(idx,1);
+  if(byPlayer && shouldUseCubeKillEffect()) spawnCubeKillEffect(z.mesh, [0x7dff65,0x5cf2c2,0xfff58f], z.type==='tank'?1.15:1);
+  if(byPlayer && shouldUseSnowKillEffect()) spawnSnowWolfKillEffect(z.mesh);
+  if(byPlayer && shouldUseElectricKillEffect()) spawnElectricStrikeKillEffect(z.mesh);
   scene.remove(z.mesh);
   const earn = Math.round(z.cash + Math.random()*35 + waveLevel*5);
   save.cash += earn; save.kills++; persist();
   showMsg(`${label || '擊殺'} +$${earn}`);
   if(Math.random()<.13) spawnCashDrop(z.mesh.position.clone(), 120 + floorIndex*25);
 }
+
+function shouldUseCubeKillEffect(){
+  return save && save.selectedGun === 'cube';
+}
+function spawnCubeKillEffect(sourceMesh, palette=[0xffdc58,0x78f7ff,0xffffff], sizeBoost=1){
+  if(!sourceMesh || !scene) return;
+  const box = new THREE.Box3().setFromObject(sourceMesh);
+  if(!isFinite(box.min.x) || box.isEmpty()) return;
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const group = new THREE.Group();
+  group.position.copy(center);
+  scene.add(group);
+  const cubes = [];
+  const count = Math.max(26, Math.min(72, Math.round((size.x + size.y + size.z) * 11)));
+  for(let i=0;i<count;i++){
+    const cubeSize = (0.07 + Math.random()*0.08) * sizeBoost;
+    const color = palette[i % palette.length];
+    const mat = new THREE.MeshStandardMaterial({
+      color,
+      emissive:color,
+      emissiveIntensity:.85,
+      metalness:.45,
+      roughness:.18,
+      transparent:true,
+      opacity:.95
+    });
+    const cube = new THREE.Mesh(new THREE.BoxGeometry(cubeSize,cubeSize,cubeSize), mat);
+    const home = new THREE.Vector3(
+      (Math.random()-.5) * Math.max(.4, size.x),
+      (Math.random()-.5) * Math.max(.65, size.y),
+      (Math.random()-.5) * Math.max(.4, size.z)
+    );
+    cube.position.copy(home);
+    cube.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+    cube.userData = {
+      home,
+      vel:new THREE.Vector3(),
+      spin:new THREE.Vector3((Math.random()-.5)*5, (Math.random()-.5)*5, (Math.random()-.5)*5),
+      pulse:Math.random()*Math.PI*2
+    };
+    group.add(cube);
+    cubes.push(cube);
+  }
+  const shock = new THREE.Mesh(
+    new THREE.SphereGeometry(Math.max(.28, size.length()*.08), 14, 12),
+    new THREE.MeshBasicMaterial({ color:palette[0], transparent:true, opacity:.45, wireframe:true })
+  );
+  shock.visible = false;
+  group.add(shock);
+  killEffects.push({ group, cubes, shock, timer:0, holdTime:.9, explodeTime:2.0, exploded:false, baseSize:size.clone() });
+}
+function clearKillEffects(){
+  killEffects.forEach(fx => { fx.group.traverse(o => { if(o.material) o.material.dispose?.(); if(o.geometry) o.geometry.dispose?.(); }); scene.remove(fx.group); });
+  killEffects = [];
+}
+function shouldUseSnowKillEffect(){ return save && save.selectedGun === 'snow'; }
+function shouldUseElectricKillEffect(){ return save && save.selectedGun === 'electric'; }
+function spawnSnowWolfKillEffect(sourceMesh){
+  if(!sourceMesh || !scene) return;
+  const box = new THREE.Box3().setFromObject(sourceMesh); if(!isFinite(box.min.x) || box.isEmpty()) return;
+  const center = box.getCenter(new THREE.Vector3()); const size = box.getSize(new THREE.Vector3());
+  const group = new THREE.Group(); group.position.copy(center); scene.add(group);
+  const victim = new THREE.Group();
+  for(let i=0;i<18;i++){
+    const flake = new THREE.Mesh(new THREE.CircleGeometry(.03 + Math.random()*.035, 6), new THREE.MeshBasicMaterial({ color:0xe8fbff, transparent:true, opacity:.9 }));
+    flake.position.set((Math.random()-.5)*1.2, 1.8 + Math.random()*1.0, (Math.random()-.5)*1.2);
+    flake.userData = { drift:(Math.random()-.5)*.25, fall:.35 + Math.random()*.55, pulse:Math.random()*Math.PI*2 };
+    group.add(flake);
+  }
+  const wolf = new THREE.Group();
+  const wolfMat = new THREE.MeshStandardMaterial({ color:0x67727f, emissive:0x1e2731, roughness:.65, metalness:.08 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(.72,.38,.22), wolfMat); body.position.set(-1.7,.36,0); wolf.add(body);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(.28,.24,.18), wolfMat); head.position.set(-1.28,.45,0); wolf.add(head);
+  const ear1 = new THREE.Mesh(new THREE.ConeGeometry(.06,.12,4), wolfMat); ear1.position.set(-1.33,.62,.06); wolf.add(ear1);
+  const ear2 = ear1.clone(); ear2.position.z = -.06; wolf.add(ear2);
+  for(let i=0;i<4;i++){ const leg = new THREE.Mesh(new THREE.BoxGeometry(.08,.26,.08), wolfMat); leg.position.set(-1.88 + (i>1?.34:0), .13, i%2?-.06:.06); wolf.add(leg); }
+  group.add(wolf);
+  specialKillEffects.push({ type:'snowwolf', group, victim, wolf, timer:0, duration:3.0, center:center.clone(), size:size.clone() });
+}
+function spawnElectricStrikeKillEffect(sourceMesh){
+  if(!sourceMesh || !scene) return;
+  const box = new THREE.Box3().setFromObject(sourceMesh); if(!isFinite(box.min.x) || box.isEmpty()) return;
+  const center = box.getCenter(new THREE.Vector3()); const size = box.getSize(new THREE.Vector3());
+  const group = new THREE.Group(); scene.add(group);
+  const start = center.clone().add(new THREE.Vector3(0, 5.2 + size.y, 0));
+  const end = center.clone().add(new THREE.Vector3(0, .8, 0));
+  const pts = [start.clone()];
+  for(let i=1;i<8;i++) pts.push(new THREE.Vector3(center.x + (Math.random()-.5)*.8, start.y - (start.y-end.y)*(i/8), center.z + (Math.random()-.5)*.8));
+  pts.push(end.clone());
+  for(let i=0;i<pts.length-1;i++){
+    const geo = new THREE.BufferGeometry().setFromPoints([pts[i].clone().sub(center), pts[i+1].clone().sub(center)]);
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color:0x67cfff, transparent:true, opacity:1 }));
+    group.add(line);
+  }
+  const flash = new THREE.Mesh(new THREE.SphereGeometry(.3, 12, 10), new THREE.MeshBasicMaterial({ color:0x8de5ff, transparent:true, opacity:.85 })); flash.position.copy(end.clone().sub(center)); group.add(flash);
+  for(let i=0;i<10;i++){
+    const arc = new THREE.Mesh(new THREE.TorusGeometry(.18 + Math.random()*.15, .012, 8, 20), new THREE.MeshBasicMaterial({ color:0x4ca8ff, transparent:true, opacity:.85 }));
+    arc.position.set((Math.random()-.5)*.6, .8 + Math.random()*.5, (Math.random()-.5)*.6); arc.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0); group.add(arc);
+  }
+  group.position.copy(center);
+  specialKillEffects.push({ type:'electric', group, timer:0, duration:1.35 });
+}
+function clearSpecialKillEffects(){
+  specialKillEffects.forEach(fx => { fx.group.traverse(o => { if(o.material) o.material.dispose?.(); if(o.geometry) o.geometry.dispose?.(); }); scene.remove(fx.group); });
+  specialKillEffects = [];
+}
+function updateSpecialKillEffects(dt){
+  for(let i=specialKillEffects.length-1;i>=0;i--){
+    const fx = specialKillEffects[i]; fx.timer += dt;
+    if(fx.type === 'snowwolf'){
+      fx.group.children.forEach(ch => {
+        if(ch.geometry && ch.geometry.type === 'CircleGeometry'){
+          ch.position.y -= dt * ch.userData.fall;
+          ch.position.x += Math.sin(fx.timer*2 + ch.userData.pulse) * .01 + ch.userData.drift*dt;
+          ch.material.opacity = .35 + Math.sin(fx.timer*6 + ch.userData.pulse) * .25;
+          if(ch.position.y < .65) ch.position.y = 1.9 + Math.random()*.8;
+        }
+      });
+      if(fx.timer > 1.75){
+        const p = Math.min(1, (fx.timer-1.75)/.8);
+        fx.wolf.position.x = -1.7 + p*1.85;
+        fx.wolf.position.y = .36 + Math.sin(p*Math.PI*3)*.08;
+        fx.wolf.rotation.y = Math.sin(p*Math.PI*.6)*.18;
+      }
+      if(fx.timer > 2.45){
+        const fade = 1 - Math.min(1, (fx.timer-2.45)/.55);
+        fx.group.traverse(o => { if(o.material) o.material.opacity = Math.max(0, fade); });
+      }
+    } else if(fx.type === 'electric'){
+      fx.group.children.forEach((ch,idx) => {
+        if(ch.type === 'Line'){
+          ch.material.opacity = Math.max(0, 1 - fx.timer/fx.duration);
+        } else if(ch.geometry && ch.geometry.type === 'TorusGeometry'){
+          ch.rotation.x += dt * (4+idx*.3); ch.rotation.y += dt * (2.5+idx*.2); ch.material.opacity = Math.max(0, .85 - fx.timer*.55); ch.scale.setScalar(1 + fx.timer*1.4);
+        } else if(ch.geometry && ch.geometry.type === 'SphereGeometry'){
+          ch.material.opacity = Math.max(0, .85 - fx.timer*.9); ch.scale.setScalar(1 + fx.timer*3);
+        }
+      });
+    }
+    if(fx.timer >= fx.duration){ fx.group.traverse(o => { if(o.material) o.material.dispose?.(); if(o.geometry) o.geometry.dispose?.(); }); scene.remove(fx.group); specialKillEffects.splice(i,1); }
+  }
+}
+function updateKillEffects(dt){
+  for(let i=killEffects.length-1;i>=0;i--){
+    const fx = killEffects[i];
+    fx.timer += dt;
+    if(fx.timer < fx.holdTime){
+      const t = fx.timer;
+      fx.cubes.forEach((cube, idx) => {
+        const u = cube.userData;
+        cube.position.x = u.home.x + Math.sin(t*6 + u.pulse + idx*.13) * .03;
+        cube.position.y = u.home.y + Math.cos(t*5 + u.pulse + idx*.11) * .03;
+        cube.position.z = u.home.z + Math.sin(t*4 + u.pulse + idx*.09) * .03;
+        cube.rotation.x += dt * u.spin.x * .35;
+        cube.rotation.y += dt * u.spin.y * .35;
+        cube.rotation.z += dt * u.spin.z * .35;
+        const blink = .6 + Math.sin(t*12 + u.pulse)*.35;
+        cube.material.opacity = .7 + Math.sin(t*10 + u.pulse)*.25;
+        cube.material.emissiveIntensity = .65 + blink * .75;
+      });
+    } else {
+      if(!fx.exploded){
+        fx.exploded = true;
+        fx.shock.visible = true;
+        fx.cubes.forEach((cube, idx) => {
+          const u = cube.userData;
+          const dir = u.home.clone().normalize();
+          if(dir.lengthSq() < .001) dir.set(Math.random()-.5, Math.random()-.15, Math.random()-.5).normalize();
+          u.vel.copy(dir.multiplyScalar(2.4 + Math.random()*4.2));
+          u.vel.y += 1.2 + Math.random()*2.2;
+        });
+      }
+      const t = fx.timer - fx.holdTime;
+      const fade = Math.max(0, 1 - t / fx.explodeTime);
+      fx.cubes.forEach((cube) => {
+        const u = cube.userData;
+        u.vel.y -= 4.8 * dt;
+        cube.position.addScaledVector(u.vel, dt);
+        cube.rotation.x += dt * u.spin.x;
+        cube.rotation.y += dt * u.spin.y;
+        cube.rotation.z += dt * u.spin.z;
+        cube.material.opacity = .92 * fade;
+        cube.material.emissiveIntensity = .25 + fade * 1.25;
+      });
+      if(fx.shock){
+        fx.shock.material.opacity = .45 * fade;
+        const s = 1 + t * 2.8;
+        fx.shock.scale.set(s,s,s);
+        fx.shock.rotation.y += dt * 2.6;
+      }
+      if(t >= fx.explodeTime){
+        fx.group.traverse(o => { if(o.material) o.material.dispose?.(); if(o.geometry) o.geometry.dispose?.(); });
+        scene.remove(fx.group);
+        killEffects.splice(i,1);
+      }
+    }
+  }
+}
+function addLightningTracer(a,b,color=0x67cfff){
+  const group = new THREE.Group();
+  const dir = b.clone().sub(a); const len = dir.length();
+  const segs = Math.max(6, Math.min(14, Math.floor(len/9)));
+  const pts = [a.clone()];
+  for(let i=1;i<segs;i++){
+    const t = i/segs;
+    const p = a.clone().lerp(b, t);
+    p.x += (Math.random()-.5) * 1.0; p.y += (Math.random()-.5) * .55; p.z += (Math.random()-.5) * 1.0;
+    pts.push(p);
+  }
+  pts.push(b.clone());
+  function lineFrom(points, widthColor, op){
+    for(let i=0;i<points.length-1;i++){
+      const geo = new THREE.BufferGeometry().setFromPoints([points[i], points[i+1]]);
+      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color:widthColor, transparent:true, opacity:op }));
+      group.add(line);
+    }
+  }
+  lineFrom(pts, color, 1);
+  const corePts = pts.map((p,idx)=> idx===0||idx===pts.length-1 ? p.clone() : p.clone().lerp(a.clone().lerp(b, idx/(pts.length-1)), .45));
+  lineFrom(corePts, 0xeaffff, .9);
+  for(let k=0;k<2;k++){
+    const branchFrom = 1 + Math.floor(Math.random()*(pts.length-3));
+    const base = pts[branchFrom].clone();
+    const branch = [base, base.clone().add(new THREE.Vector3((Math.random()-.5)*1.2, (Math.random()-.2)*.8, (Math.random()-.5)*1.2))];
+    lineFrom(branch, 0x8ad8ff, .65);
+  }
+  const glow = new THREE.PointLight(0x67cfff, 2.1, 5.2); glow.position.copy(b); group.add(glow);
+  scene.add(group); bullets.push({mesh:group, life:.14, lightning:true});
+}
 function addTracer(a,b,color){
-  const geo = new THREE.BufferGeometry().setFromPoints([a,b]);
-  const line = new THREE.Line(geo, new THREE.LineBasicMaterial({color, transparent:true, opacity:1}));
-  scene.add(line); bullets.push({mesh:line, life:.07});
+  const group = new THREE.Group();
+  const geo1 = new THREE.BufferGeometry().setFromPoints([a,b]);
+  const glow = new THREE.Line(geo1, new THREE.LineBasicMaterial({color, transparent:true, opacity:.35}));
+  group.add(glow);
+  const geo2 = new THREE.BufferGeometry().setFromPoints([a,b]);
+  const core = new THREE.Line(geo2, new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:.88}));
+  group.add(core);
+  const hitLight = new THREE.PointLight(color, 1.2, 2.6); hitLight.position.copy(b); group.add(hitLight);
+  scene.add(group); bullets.push({mesh:group, life:.09, tracer:true});
 }
 function updateBullets(dt){
   for(let i=bullets.length-1;i>=0;i--){
@@ -1331,6 +2301,10 @@ function updateBullets(dt){
       if(b.mesh.material) b.mesh.material.opacity = Math.max(0, b.life/.7);
     } else if(b.light){
       b.mesh.intensity = Math.max(0, b.life/.22*1.8);
+    } else if(b.lightning){
+      b.mesh.children.forEach(ch => { if(ch.material) ch.material.opacity = Math.max(0, b.life/.14); if(ch.isPointLight) ch.intensity = Math.max(0, b.life/.14*2.0); });
+    } else if(b.tracer){
+      b.mesh.children.forEach((ch,idx) => { if(ch.material) ch.material.opacity = Math.max(0, idx===0 ? b.life/.09*.38 : b.life/.09); if(ch.isPointLight) ch.intensity = Math.max(0, b.life/.09*1.5); });
     } else if(b.mesh.material) {
       b.mesh.material.opacity = Math.max(0, b.life/.07);
     }
@@ -1377,7 +2351,7 @@ function nearestZombie(pos, maxDist){
 
 function rebuildNavGrid(){
   // 用 2 公尺一格做迷宮導航。障礙物、牆、桌子都會擋路，所以殭屍只能繞路追人。
-  const cell = 2, min = -35, max = 35;
+  const cell = 2, min = -Math.max(35, arenaHalf-2), max = Math.max(35, arenaHalf-2);
   const cols = Math.floor((max-min)/cell) + 1;
   const rows = cols;
   const blocked = new Array(cols*rows).fill(false);
@@ -1471,8 +2445,8 @@ function moveZombieWithCollision(z, delta){
   if(!collides(new THREE.Vector3(nx.x,1.75,nx.z), radius)) pos.x = nx.x;
   const nz = pos.clone(); nz.z += delta.z;
   if(!collides(new THREE.Vector3(nz.x,1.75,nz.z), radius)) pos.z = nz.z;
-  pos.x = THREE.MathUtils.clamp(pos.x, -36.2, 36.2);
-  pos.z = THREE.MathUtils.clamp(pos.z, -36.2, 36.2);
+  pos.x = THREE.MathUtils.clamp(pos.x, -arenaHalf, arenaHalf);
+  pos.z = THREE.MathUtils.clamp(pos.z, -arenaHalf, arenaHalf);
 }
 function getZombieSpawnPoint(){
   const edge = 34.5;
@@ -1649,6 +2623,20 @@ function animateGun(dt){
   if(save && save.selectedSkin === 'galaxy'){
     gunGroup.children.forEach((c,i)=>{ if(c.material && c.material.emissive) c.material.emissiveIntensity = .2 + Math.sin(performance.now()*.004+i)*.14; });
   }
+  if(cubeFlashCubes.length){
+    const t = performance.now() * 0.001;
+    cubeFlashCubes.forEach((c,i)=>{
+      const f = c.userData.flash; if(!f || !c.material) return;
+      const pulse = .75 + Math.sin(t * f.speed + f.phase) * .25;
+      c.scale.setScalar((f.baseScale || 1) * pulse);
+      c.material.opacity = .58 + Math.sin(t*(f.speed+1.5) + f.phase) * .34;
+      if(c.material.emissive){
+        c.material.emissiveIntensity = .55 + Math.sin(t*(f.speed+2.1) + f.phase) * .55;
+      }
+      c.rotation.x += dt * (.35 + i*.002);
+      c.rotation.y += dt * (.5 + i*.003);
+    });
+  }
   if(cubeAuraCubes.length){
     const t = performance.now() * 0.001;
     cubeAuraCubes.forEach((c,i)=>{
@@ -1669,11 +2657,63 @@ function animateGun(dt){
       c.rotation.y += dt * (1.6 + i*.1);
     });
   }
+  if(snowAuraFlakes.length){
+    const t = performance.now() * 0.001;
+    snowAuraFlakes.forEach((f,i)=>{
+      const d = f.userData.snow; if(!d) return;
+      f.position.x = d.base.x + Math.sin(t*d.speed + d.phase) * .03;
+      f.position.y = d.base.y + Math.cos(t*(d.speed*.8) + d.phase) * .025;
+      f.position.z = d.base.z + Math.sin(t*(d.speed*.65) + d.phase) * .04;
+      f.rotation.z += dt * d.spin;
+      f.rotation.y += dt * .8;
+      f.scale.setScalar(.92 + Math.sin(t*4 + d.phase) * .12);
+      f.children.forEach(ch => { if(ch.material){ ch.material.opacity = .62 + Math.sin(t*6 + d.phase+i)*.25; ch.material.emissiveIntensity = .58 + Math.sin(t*7 + d.phase)*.35; } });
+    });
+  }
+  if(electricAuraRings.length){
+    const t = performance.now() * 0.001;
+    electricAuraRings.forEach((r,i)=>{
+      const e = r.userData.electric;
+      if(r.isPointLight){
+        r.intensity = 0.8 + Math.sin(t*13 + i) * 0.45;
+        r.position.y = .1 + Math.sin(t*7+i)*.03;
+        return;
+      }
+      if(!e) return;
+      r.position.x = e.base.x + Math.sin(t*e.speed + e.phase) * .025;
+      r.position.y = e.base.y + Math.cos(t*(e.speed*.9) + e.phase) * .03;
+      r.rotation.x = e.tilt + t*(1.8 + i*.3);
+      r.rotation.y += dt * (2.5 + i*.25);
+      r.rotation.z += dt * (1.3 + i*.18);
+      if(r.material){ r.material.opacity = .45 + Math.sin(t*10 + e.phase) * .28; r.material.emissiveIntensity = .7 + Math.sin(t*13 + e.phase) * .5; }
+      r.scale.setScalar(.92 + Math.sin(t*8 + e.phase)*.08);
+    });
+  }
+  if(electricSparkBolts.length){
+    const t = performance.now() * 0.001;
+    electricSparkBolts.forEach((line, idx) => {
+      const e = line.userData.electricSpark; if(!e) return;
+      const mid = e.start.clone().lerp(e.end, .5);
+      mid.x += Math.sin(t*e.speed + e.phase) * e.amp;
+      mid.y += Math.cos(t*(e.speed*.8) + e.phase) * e.amp*1.4;
+      mid.z += Math.sin(t*(e.speed*.65) + e.phase) * e.amp;
+      line.geometry.setFromPoints([e.start, mid, e.end]);
+      line.geometry.attributes.position.needsUpdate = true;
+      if(line.material) line.material.opacity = .4 + Math.sin(t*18 + e.phase) * .35;
+    });
+  }
   if(killProjector){
     killProjector.material.opacity = .82 + Math.sin(performance.now()*0.005) * .12;
     killProjector.position.y = .23 + Math.sin(performance.now()*0.003) * .015;
   }
-  if(reloading){
+  if(gunInspectTimer > 0 && !reloading){
+    gunInspectTimer = Math.max(0, gunInspectTimer - dt);
+    const p = gunInspectTotal ? (1 - gunInspectTimer / gunInspectTotal) : 1;
+    gunGroup.position.set(.08, -.23, -.55);
+    gunGroup.rotation.x = -pitch*.05 + Math.sin(p*Math.PI) * .22;
+    gunGroup.rotation.y = .55 + Math.sin(p*Math.PI*2) * .55;
+    gunGroup.rotation.z = Math.sin(p*Math.PI*2.5) * .28;
+  } else if(reloading){
     const p = reloadTotal ? (1 - reloadTimer/reloadTotal) : 0;
     gunGroup.rotation.z = Math.sin(p*Math.PI*3) * .18;
     gunGroup.rotation.x = -pitch*.08 - .25*Math.sin(p*Math.PI);
@@ -1698,7 +2738,7 @@ function gameOver(){
     menu.querySelector('p').innerHTML = `這次擊殺：<b>${save.kills}</b>。你可以重新開始，或先去商店買更強的狙擊槍。`;
   }
   player.hp = player.maxHp;
-  reloading = false; ammo = getGunDef().mag; reloadBox.classList.remove('show');
+  reloading = false; gunInspectTimer = 0; gunInspectTotal = 0; ammo = getGunDef().mag; reloadBox.classList.remove('show');
   if(currentMode === 'duel') setupDuelMode(); else setupSurvivalMode();
 }
 function updateHUD(){
@@ -1706,18 +2746,34 @@ function updateHUD(){
   $('cashText').textContent = '$' + Math.floor(save.cash);
   $('killsText').textContent = save.kills;
   updateKillProjector();
-  $('timeText').textContent = currentMode === 'duel' ? (online.enabled ? '線上對狙' : '對狙模式') : ((phase==='day'?'早上 ':'夜晚 ') + Math.ceil(phaseTimer));
+  $('timeText').textContent = currentMode === 'duel' ? (online.enabled ? '線上對狙' : (duelRule==='onevone'?'一般對狙':duelRule==='bomb'?'經典爆破':duelRule==='elim'?'經典殲滅':'佔地盤')) : ((phase==='day'?'早上 ':'夜晚 ') + Math.ceil(phaseTimer));
   $('ammoText').textContent = reloading ? '換彈中' : (ammo + '/' + getGunDef().mag);
   $('syringeText').textContent = save.syringes || 0;
   $('floorText').textContent = currentArenaName;
   const g = getGunDef(), up = save.upgrades[g.id] || 0, skin = skinDefs.find(s=>s.id===save.selectedSkin)?.name || '原本外觀';
-  $('weaponText').innerHTML = `<b>${g.name}</b><br>Lv.${up}｜傷害 ${Math.round(getGunDamage())}｜彈匣 ${g.mag}｜皮膚：${skin}${slideTimer>0?'｜滑鏟中':''}`;
+  $('weaponText').innerHTML = `<b>${g.name}</b><br>Lv.${up}｜傷害 ${Math.round(getGunDamage())}｜彈匣 ${g.mag}｜皮膚：${skin}${slideTimer>0?'｜滑鏟中':''}${player.prone?'｜趴下':''}${gunInspectTimer>0?'｜檢視中':''}`;
   const teamPanel = $('teamPanel'); teamPanel.innerHTML = '';
   if(currentMode === 'duel'){
-    const div = document.createElement('div'); div.className='mate';
-    const pct = duelBot && duelBot.state==='alive' ? Math.max(0, duelBot.hp/duelBot.maxHp*100) : 0;
-    div.innerHTML = `<b>對狙機器人</b> <span class="warning">100ms 反應</span><div class="bar ${pct<35?'danger':''}"><span style="width:${pct}%"></span></div><div style="margin-top:6px;font-size:12px;color:#cfe8f1">Shift 跑步｜V 滑鏟｜F 攀爬高台｜子彈可穿牆</div>`;
-    teamPanel.appendChild(div);
+    const obj = document.createElement('div'); obj.className='mate';
+    obj.innerHTML = `<b>${getModeStatusText()}</b><div style="margin-top:6px;font-size:12px;color:#cfe8f1">Shift 跑步｜V 滑鏟｜F 攀爬高台｜P 爆破裝彈｜Z 趴下｜子彈可穿牆</div>`;
+    teamPanel.appendChild(obj);
+    if(online.enabled){
+      const div = document.createElement('div'); div.className='mate';
+      div.innerHTML = `<b>線上對手</b><div class="bar"><span style="width:${online.remoteData&&online.remoteData.hp?online.remoteData.hp:0}%"></span></div>`;
+      teamPanel.appendChild(div);
+    } else if(duelRule === 'onevone'){
+      const div = document.createElement('div'); div.className='mate';
+      const pct = duelBot && duelBot.state==='alive' ? Math.max(0, duelBot.hp/duelBot.maxHp*100) : 0;
+      div.innerHTML = `<b>對狙機器人</b> <span class="warning">100ms 反應</span><div class="bar ${pct<35?'danger':''}"><span style="width:${pct}%"></span></div>`;
+      teamPanel.appendChild(div);
+    } else {
+      const myAlive = modeBots.filter(b=>b.team===playerTeam && b.state==='alive').length + (player.dead?0:1);
+      const enemyAlive = modeBots.filter(b=>b.team===enemyTeam && b.state==='alive').length;
+      const div = document.createElement('div'); div.className='mate';
+      const roleLine = duelRule==='bomb' ? `<br><span class="warning">${bombRole==='attack'?'你是進攻方：炸彈在你面前':'你是防守方：守住安裝點'}</span>` : '';
+      div.innerHTML = `<b>隊伍</b> 我方存活 ${myAlive}/5｜敵方存活 ${enemyAlive}/5${roleLine}${player.dead?'<br><span class="warning">你已死亡，等待復活/下一回合</span>':''}`;
+      teamPanel.appendChild(div);
+    }
   } else {
     teammates.forEach(m => {
       const div = document.createElement('div'); div.className='mate';
@@ -1730,17 +2786,56 @@ function updateHUD(){
 function showMsg(msg){
   centerMsg.textContent = msg; centerMsg.classList.add('show'); msgTimer = 2.0;
 }
+function drawPlayerDirectionOnMiniMap(ox, oz, sc){
+  const px = ox + player.pos.x * sc, pz = oz + player.pos.z * sc;
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  const bx = -fx, bz = -fz;
+  const tipX = px + fx * 12, tipZ = pz + fz * 12;
+  const leftX = px + bx * 4 + fz * 5, leftZ = pz + bz * 4 - fx * 5;
+  const rightX = px + bx * 4 - fz * 5, rightZ = pz + bz * 4 + fx * 5;
+  mapCtx.save();
+  mapCtx.lineWidth = 2;
+  mapCtx.strokeStyle = 'rgba(190,255,220,.95)';
+  mapCtx.fillStyle = player.dead ? '#777' : '#64ff93';
+  mapCtx.beginPath();
+  mapCtx.moveTo(tipX, tipZ);
+  mapCtx.lineTo(leftX, leftZ);
+  mapCtx.lineTo(rightX, rightZ);
+  mapCtx.closePath();
+  mapCtx.fill();
+  mapCtx.stroke();
+
+  // 後方用短紅線標示，這樣在小地圖上一眼知道哪邊是背後。
+  mapCtx.strokeStyle = 'rgba(255,105,120,.95)';
+  mapCtx.lineWidth = 3;
+  mapCtx.beginPath();
+  mapCtx.moveTo(px + bx * 4, pz + bz * 4);
+  mapCtx.lineTo(px + bx * 12, pz + bz * 12);
+  mapCtx.stroke();
+
+  mapCtx.font = 'bold 11px Arial, Microsoft JhengHei';
+  mapCtx.textAlign = 'center';
+  mapCtx.textBaseline = 'middle';
+  mapCtx.fillStyle = '#dfffee';
+  mapCtx.fillText('前', px + fx * 20, pz + fz * 20);
+  mapCtx.fillStyle = '#ff8a9a';
+  mapCtx.fillText('後', px + bx * 19, pz + bz * 19);
+  mapCtx.restore();
+}
 function drawMiniMap(){
   mapCtx.clearRect(0,0,180,180);
   mapCtx.fillStyle = 'rgba(6,10,16,.86)'; mapCtx.fillRect(0,0,180,180);
   mapCtx.strokeStyle = 'rgba(160,230,255,.28)'; mapCtx.strokeRect(6,6,168,168);
-  const sc = 168/76, ox=90, oz=90;
+  const sc = 78 / Math.max(36, arenaHalf), ox=90, oz=90;
   mapCtx.fillStyle='rgba(150,190,210,.35)';
   obstacles.forEach(o=>{ mapCtx.fillRect(ox + (o.x-o.w/2)*sc, oz + (o.z-o.d/2)*sc, o.w*sc, o.d*sc); });
-  mapCtx.fillStyle='#64ff93'; mapCtx.beginPath(); mapCtx.arc(ox+player.pos.x*sc, oz+player.pos.z*sc, 4, 0, Math.PI*2); mapCtx.fill();
+  captureZones.forEach(z=>{ mapCtx.strokeStyle = z.owner==='blue'?'#4fb8ff':z.owner==='red'?'#ff4d5f':'#d9e7ff'; mapCtx.beginPath(); mapCtx.arc(ox+z.pos.x*sc, oz+z.pos.z*sc, 8*sc, 0, Math.PI*2); mapCtx.stroke(); });
+  bombSites.forEach(s=>{ mapCtx.fillStyle=s.planted?'#ff3030':'#ffe36e'; mapCtx.fillRect(ox+s.pos.x*sc-4, oz+s.pos.z*sc-4, 8, 8); });
+  drawPlayerDirectionOnMiniMap(ox, oz, sc);
   if(currentMode === 'duel'){
     if(online.enabled && online.remoteMesh && online.remoteMesh.visible){ mapCtx.fillStyle='#53a5ff'; mapCtx.beginPath(); mapCtx.arc(ox+online.remoteMesh.position.x*sc, oz+online.remoteMesh.position.z*sc, 4, 0, Math.PI*2); mapCtx.fill(); }
-    else if(duelBot && duelBot.state==='alive'){ mapCtx.fillStyle='#ff5d74'; mapCtx.beginPath(); mapCtx.arc(ox+duelBot.mesh.position.x*sc, oz+duelBot.mesh.position.z*sc, 4, 0, Math.PI*2); mapCtx.fill(); }
+    else if(duelRule==='onevone' && duelBot && duelBot.state==='alive'){ mapCtx.fillStyle='#ff5d74'; mapCtx.beginPath(); mapCtx.arc(ox+duelBot.mesh.position.x*sc, oz+duelBot.mesh.position.z*sc, 4, 0, Math.PI*2); mapCtx.fill(); }
+    else modeBots.forEach(b=>{ if(b.state==='alive'){ mapCtx.fillStyle = b.team==='blue'?'#53a5ff':'#ff5d74'; mapCtx.beginPath(); mapCtx.arc(ox+b.mesh.position.x*sc, oz+b.mesh.position.z*sc, 3.2, 0, Math.PI*2); mapCtx.fill(); } });
     climbSpots.forEach(s=>{ mapCtx.fillStyle='#86eaff'; mapCtx.fillRect(ox+s.bottom.x*sc-2, oz+s.bottom.z*sc-2, 4, 4); });
   } else {
     teammates.forEach(m=>{ mapCtx.fillStyle = m.state==='down'?'#ff4d5f':'#6cc9ff'; mapCtx.beginPath(); mapCtx.arc(ox+m.pos.x*sc, oz+m.pos.z*sc, 3.3,0,Math.PI*2); mapCtx.fill(); });
