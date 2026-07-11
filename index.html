@@ -15,6 +15,8 @@
   canvas{ display:block; }
   .hud{ position:fixed; inset:0; pointer-events:none; }
   .topbar{ position:absolute; top:12px; left:12px; right:12px; display:flex; gap:10px; align-items:flex-start; justify-content:space-between; }
+  .centerExitBtn{ position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:7; pointer-events:auto; padding:11px 18px; border-radius:999px; color:#fff; background:linear-gradient(90deg,#ff526e,#ff9d4d); border:1px solid rgba(255,255,255,.28); box-shadow:0 0 22px rgba(255,90,110,.45), 0 6px 18px rgba(0,0,0,.38); font-size:15px; letter-spacing:1px; }
+  .centerExitBtn:hover{ transform:translateX(-50%) translateY(-1px); filter:brightness(1.1); }
   .chip{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:8px 12px; box-shadow:0 0 18px rgba(70,180,255,.15); backdrop-filter:blur(6px); }
   .stats{ display:flex; flex-wrap:wrap; gap:8px; max-width:72vw; }
   .stat b{ color:var(--gold); }
@@ -158,8 +160,10 @@ const firebaseConfig = {
 };'></textarea>
       <div class="row" style="margin-top:10px">
         <button id="connectFirebaseBtn" class="secondary">我已登入 Firebase，連線</button>
+        <button id="useReferenceFirebaseBtn">套用參考 Firebase</button>
         <button id="clearFirebaseConfigBtn" class="dark">清除 Firebase 設定</button>
       </div>
+      <small>參考來源：你給的 <b>https://geahsu.github.io/-12345/</b>。如果你要換自己的專案，直接貼新的 firebaseConfig 再連線。</small>
     </div>
     <div class="shopItem">
       <div class="name">玩家名字</div>
@@ -191,6 +195,7 @@ const firebaseConfig = {
       <div class="chip weap" id="weaponText">武器</div>
     </div>
   </div>
+  <button id="exitGameBtn" class="centerExitBtn hidden">退出遊戲 / 回主選單</button>
   <div class="miniMap"><canvas id="mapCanvas" width="180" height="180"></canvas></div>
   <div id="scope" class="scope"><div class="ring"></div></div>
   <div class="crosshair" id="crosshair"></div>
@@ -198,7 +203,7 @@ const firebaseConfig = {
   <div id="reviveBox" class="revive"><b id="reviveText">治療中</b><div class="bar"><span id="reviveBar" style="width:0%"></span></div></div>
   <div id="reloadBox" class="reload"><b id="reloadText">換彈中</b><div class="bar"><span id="reloadBar" style="width:0%"></span></div></div>
   <div class="bottom">
-    <div class="chip hint">W前 S後 A左 D右｜空白鍵跳｜Shift 跑步｜V 滑鏟加速｜Q 瞄準｜X / 左鍵 射擊｜R 換彈｜M 音樂開關｜B 商店｜F 換樓層 / 對狙模式攀爬高台｜P 爆破裝彈｜Z 趴下｜對狙模式子彈可穿牆｜E 靠近倒地隊友用治療針｜治療針可在商店補給｜地圖有障礙物可躲藏｜僵屍不穿牆，會走迷宮</div>
+    <div class="chip hint">W前 S後 A左 D右｜空白鍵跳｜Shift 跑步｜V 滑鏟加速｜Q 瞄準｜X / 左鍵 射擊｜R 換彈｜M 音樂開關｜Esc / 中間退出鍵 回主選單｜B 商店｜F 換樓層 / 對狙模式攀爬高台｜P 爆破裝彈｜Z 趴下｜對狙模式子彈可穿牆｜E 靠近倒地隊友用治療針｜治療針可在商店補給｜地圖有障礙物可躲藏｜僵屍不穿牆，會走迷宮</div>
   </div>
   <div class="team" id="teamPanel"></div>
   <div class="damageVignette" id="damageVignette"></div>
@@ -218,11 +223,20 @@ const reviveText = $('reviveText'), reviveBar = $('reviveBar');
 const reloadBox = $('reloadBox'), reloadText = $('reloadText'), reloadBar = $('reloadBar');
 const mapCtx = $('mapCanvas').getContext('2d');
 const onlineLobby = $('onlineLobby'), roomListEl = $('roomList'), onlineStatus = $('onlineStatus');
-const musicBtn = $('musicBtn'), musicHudBtn = $('musicHudBtn');
+const musicBtn = $('musicBtn'), musicHudBtn = $('musicHudBtn'), exitGameBtn = $('exitGameBtn');
 
 // Firebase Realtime Database：用來讓不同電腦看到同一個房間列表與玩家位置。
 // 這個版本不會自動使用固定專案；玩家要自己登入 Firebase Console，複製 firebaseConfig 貼到線上大廳。
 let firebaseConfig = null;
+const referenceFirebaseConfigText = `const firebaseConfig = {
+  apiKey: "AIzaSyAbUGxlS5TctJJA8EcGdm6UUnx80HOG5Sw",
+  authDomain: "aaron-2026.firebaseapp.com",
+  databaseURL: "https://aaron-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "aaron-2026",
+  storageBucket: "aaron-2026.firebasestorage.app",
+  messagingSenderId: "383945367796",
+  appId: "1:383945367796:web:03da881daa4d5d371bbea1"
+};`;
 
 const gunDefs = [
   { id:'rust', name:'鏽鐵偵查狙', price:0, damage:58, cooldown:.72, range:92, mag:5, reload:1.6, desc:'最開始的破舊狙擊槍，威力普通但很好上手。', color:0x777777 },
@@ -351,12 +365,14 @@ function init(){
   $('closeShopBtn').onclick = () => closeShop();
   musicBtn.onclick = toggleMusic;
   musicHudBtn.onclick = toggleMusic;
+  exitGameBtn.onclick = exitToMainMenu;
   updateMusicButtons();
   $('resetBtn').onclick = () => { localStorage.removeItem('sniperOfficeSave'); location.reload(); };
   $('closeOnlineLobbyBtn').onclick = closeOnlineLobby;
   $('createRoomBtn').onclick = createOnlineRoom;
   $('refreshRoomsBtn').onclick = listenRooms;
   $('connectFirebaseBtn').onclick = connectManualFirebase;
+  $('useReferenceFirebaseBtn').onclick = useReferenceFirebaseConfig;
   $('clearFirebaseConfigBtn').onclick = clearManualFirebaseConfig;
   $('onlineName').value = localStorage.getItem('sniperOnlineName') || '狙擊玩家';
   loadFirebaseConfigInput();
@@ -502,6 +518,7 @@ function startGame(mode='survival'){
   currentMode = mode;
   if(mode === 'duel') duelRule = selectedDuelRule();
   menu.classList.add('hidden');
+  exitGameBtn.classList.remove('hidden');
   playing = true;
   player.hp = player.maxHp;
   player.invul = 0;
@@ -525,6 +542,7 @@ function onResize(){
 function onKeyDown(e){
   keys[e.code] = true;
   if(e.code === 'KeyB') shop.classList.contains('hidden') ? openShop(true) : closeShop();
+  if(e.code === 'Escape' && playing){ exitToMainMenu(); return; }
   if(!playing) return;
   if(e.code === 'Space'){ e.preventDefault(); jumpPlayer(); }
   if(e.code === 'KeyQ') toggleScope();
@@ -554,6 +572,29 @@ function closeShop(){
   shop.classList.add('hidden');
   if(playing) setTimeout(() => renderer.domElement.requestPointerLock(), 80);
   else menu.classList.remove('hidden');
+}
+function resetMainMenuText(){
+  const title = menu.querySelector('h1');
+  const intro = menu.querySelector('p');
+  if(title) title.textContent = '末日辦公室：3D 狙擊救援';
+  if(intro) intro.innerHTML = '你被困在一棟廢棄辦公室。早上只有 30 秒可以喘息，夜晚 1 分鐘會大量出現僵屍，但夜晚也保持明亮，不會黑到看不見。用錢買狙擊槍、升級、換皮膚，保護 AI 隊友。隊友倒下時，靠近後按 <b>E</b> 使用治療針救他。';
+}
+function exitToMainMenu(){
+  if(!playing && menu && !menu.classList.contains('hidden')) return;
+  playing = false;
+  if(online.enabled) stopOnlineRoom(false);
+  if(document.pointerLockElement) document.exitPointerLock();
+  shop.classList.add('hidden');
+  scopeEl.classList.remove('on'); scoped = false; crosshair.style.display = 'block';
+  centerMsg.classList.remove('show'); msgTimer = 0; hurtTimer = 0; damageVignette.style.opacity = 0;
+  reviveProgress = 0; reviveTarget = null; reviveBox.classList.remove('show');
+  reloading = false; reloadTimer = 0; reloadTotal = 0; reloadBox.classList.remove('show');
+  gunInspectTimer = 0; gunInspectTotal = 0;
+  player.dead = false; player.hp = player.maxHp; player.invul = 0; player.prone = false; player.baseY = 1.75;
+  if(exitGameBtn) exitGameBtn.classList.add('hidden');
+  resetMainMenuText();
+  menu.classList.remove('hidden');
+  showMsg('已退出，回到主選單');
 }
 
 function setupSurvivalMode(){
@@ -639,6 +680,15 @@ function connectManualFirebase(){
   firebaseConfig = null;
   return initFirebase(true);
 }
+function useReferenceFirebaseConfig(){
+  const el = $('firebaseConfigInput');
+  if(el) el.value = referenceFirebaseConfigText;
+  localStorage.setItem('sniperFirebaseConfigText', referenceFirebaseConfigText);
+  onlineStatus.textContent = '已套用參考 Firebase，正在連線...';
+  firebaseReady = false; firebaseConfig = null;
+  if(online.unsubscribeRooms){ online.unsubscribeRooms(); online.unsubscribeRooms = null; }
+  initFirebase(true);
+}
 function clearManualFirebaseConfig(){
   localStorage.removeItem('sniperFirebaseConfigText');
   firebaseConfig = null; firebaseReady = false; db = null; roomsRef = null;
@@ -673,7 +723,7 @@ function initFirebase(showSuccess=false){
     db = firebase.database();
     roomsRef = db.ref('sniperDuelRooms');
     firebaseReady = true;
-    onlineStatus.textContent = '已連上你自己的 Firebase 房間中心，可以建立房間或加入房間。';
+    onlineStatus.textContent = '已連上 Firebase 房間中心，可以建立房間或加入房間。';
     if(showSuccess) listenRooms();
     return true;
   } catch(err){
@@ -1530,6 +1580,7 @@ function finishDuelMatch(win, msg){
   playing = false;
   if(document.pointerLockElement) document.exitPointerLock();
   centerMsg.classList.remove('show');
+  if(exitGameBtn) exitGameBtn.classList.add('hidden');
   menu.classList.remove('hidden');
   menu.querySelector('h1').textContent = win ? '你贏了！' : '你輸了！';
   menu.querySelector('p').innerHTML = msg || getModeStatusText();
@@ -2729,6 +2780,7 @@ function gameOver(){
   playing = false;
   if(document.pointerLockElement) document.exitPointerLock();
   centerMsg.classList.remove('show');
+  if(exitGameBtn) exitGameBtn.classList.add('hidden');
   menu.classList.remove('hidden');
   if(currentMode === 'duel'){
     menu.querySelector('h1').textContent = '你在對狙模式被擊中了';
